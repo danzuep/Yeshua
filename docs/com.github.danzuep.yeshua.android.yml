@@ -17,12 +17,11 @@ Repo: https://github.com/danzuep/Yeshua.git
 Builds:
   - versionName: 0.33.4
     versionCode: 3304
-    commit: 2b86d312fd7e826551d3a0ae7d6161d156119a49
+    commit: 0d2a4f01834e57cb25637f58bd5e978606f8dc47
     subdir: app
     gradle:
       - yes
-    gradleprops:
-      - appVersion=$$VERSION$$
+    prebuild: echo "appVersion=$$VERSION$$" >> ../gradle.properties
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags ^v[0-9.]+$
