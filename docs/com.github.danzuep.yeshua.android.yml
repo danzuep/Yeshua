@@ -19,6 +19,11 @@ Builds:
     versionCode: 3305
     commit: 31cd8b942dd75d50b35929181f56ce76eb149f6d
     subdir: app
+    sudo:
+      - apt-get update
+      - apt-get install -y openjdk-25-jdk-headless
+      - update-alternatives --auto java
+      - update-alternatives --auto javac
     gradle:
       - yes
     prebuild: echo "appVersion=$$VERSION$$" >> ../gradle.properties

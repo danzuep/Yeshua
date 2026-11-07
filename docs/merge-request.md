@@ -73,7 +73,7 @@ Reproducible builds are not yet configured or verified: the current metadata has
 
 ### Pipeline
 
-The initial F-Droid build failed because `gradleprops` passed `$$VERSION$$` literally to Gradle; the metadata now uses `prebuild`, where F-Droid substitutes that placeholder. The `checkupdates` job also could not parse version information from the computed Kotlin DSL, so version tags include the version code as SemVer build metadata. It now detects `v0.33.5+3305`; the metadata and draft list that latest release. Rerun the pipeline and confirm the build and reports before marking these items complete.
+The initial F-Droid build failed because `gradleprops` passed `$$VERSION$$` literally to Gradle; the metadata now uses `prebuild`, where F-Droid substitutes that placeholder. The `checkupdates` job also could not parse version information from the computed Kotlin DSL, so version tags include the version code as SemVer build metadata. It now detects `v0.33.5+3305`; the metadata and draft list that latest release. The buildserver's default `javac` does not support the app's Java 25 target, so the build recipe installs OpenJDK 25 and selects its `java` and `javac` commands. Rerun the pipeline and confirm the build and reports before marking these items complete.
 
 * [ ] All pipelines should pass.
 * [ ] All warnings and errors in the Reports tab should be fixed or explained.
