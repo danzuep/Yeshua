@@ -69,7 +69,7 @@ This is an inclusion request for the Apache-2.0-licensed Yeshua fork under its o
 
 The draft lists the latest version, `0.33.5` (`versionCode: 3305`), and pins the full commit hash for `v0.33.5+3305`.
 
-The build metadata points `binary` at the regular GitHub release APK and allowlists its public signing certificate. This configures upstream-signed publishing: after F-Droid verifies a reproducible build, it can publish the APK with the same signing key as GitHub, allowing updates across channels. A byte-for-byte match still needs to pass in the F-Droid pipeline. This setup uses only the public APK and certificate fingerprint.
+The build metadata points `binary` at the regular GitHub release APK and allowlists its public signing certificate. This configures upstream-signed publishing: after F-Droid verifies a reproducible build, it can publish the APK with the same signing key as GitHub, allowing updates across channels. The metadata setup is in place, and a byte-for-byte match has been done through the F-Droid pipeline. This setup uses only the public APK and certificate fingerprint.
 
 ### Pipeline
 
