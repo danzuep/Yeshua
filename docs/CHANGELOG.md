@@ -4,7 +4,7 @@ CHANGELOG
 #### Next release
 - Changes:
   - Translations are now built from the table on https://ebible.org/download.php and downloaded as USFM; users can add their own download sites
-  - The default translation list ships as `ebible_downloads.tsv`, refreshed by a workflow; the about page is https://ebible.org/about.php
+  - The default translation list ships as [app/src/main/assets/translations.csv](../app/src/main/assets/translations.csv), refreshed by a workflow; the about page is https://ebible.org/about.php
   - The reader now shows USFM text as flowing paragraphs with section headings, poetry lines and superscript verse numbers; tap a verse to select it, long press for more actions. Bookmarks, notes and highlights show inline
   - Remove the simple reading mode setting, the per-verse buttons and parallel translations in the chapter list (parallels are still in the verse detail), which don't fit flowing text
   - Copying or sharing multiple verses now always consolidates consecutive verses, with a plain text verse number before each verse; the "Consolidate verses when sharing" setting is removed
