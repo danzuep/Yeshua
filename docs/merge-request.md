@@ -57,7 +57,7 @@ This is an inclusion request for the Apache-2.0-licensed Yeshua fork under its o
 * [x] Metadata must be a valid YAML file.
 * [x] Metadata must use LF as line ending.
 * [x] Don't add summary/description/changelog/images or anything that should be provided in upstream repo. Please check the Changes tab to make sure there is no other unrelated files added in the MR.
-* [x] Releases are tagged and auto update is enabled unless there is a special reason. Version tags include both values as SemVer build metadata, such as `v0.33.4+3304`; metadata extracts the version and version code from the same tag.
+* [x] Releases are tagged and auto update is enabled unless there is a special reason. Version tags include both values as SemVer build metadata, such as `v0.33.5+3305`; metadata extracts the version and version code from the same tag.
 * [x] There is an issue tracker and contact info of the author so that we can report bugs and contact the author.
 * [x] An AuthorName must be added. It doesn't need to be the real name. The draft sets `AuthorName: danzuep`.
 * [x] External repos are added as git submodules instead of srclibs. You can update git submodules without opening an MR in this repo and the submodule is covered by our scanner.
@@ -67,13 +67,13 @@ This is an inclusion request for the Apache-2.0-licensed Yeshua fork under its o
 * [x] Don't add any disabled versions in the metadata. The draft contains no disabled builds.
 * [x] The `commit` field should be the full hash. Please don't use tag or branch in commit.
 
-The draft lists version `0.33.4` (`versionCode: 3304`) and uses the correlating tag hash.
+The draft lists the latest version, `0.33.5` (`versionCode: 3305`), and pins the full commit hash for `v0.33.5+3305`.
 
 Reproducible builds are not yet configured or verified: the current metadata has no upstream APK reference or signing-certificate allowlist, and byte-for-byte reproduction of the GitHub APK has not been demonstrated. Keep this item open until the release build is verified and the appropriate metadata is added, or the maintainers agree to F-Droid signing with its own key. Never publish the private keystore or its password; reproducible-build setup uses public certificates and signed APKs.
 
 ### Pipeline
 
-The initial F-Droid build failed because `gradleprops` passed `$$VERSION$$` literally to Gradle; the metadata now uses `prebuild`, where F-Droid substitutes that placeholder. The `checkupdates` job could not parse version information from the computed Kotlin DSL, so version tags include the version code as SemVer build metadata. Use the `Auto Tag` workflow's `workflow_dispatch` input `release_tag=v0.33.4` once to create `v0.33.4+3304`; future releases use one version-code tag each. Rerun the pipeline and confirm the build and reports before marking these items complete.
+The initial F-Droid build failed because `gradleprops` passed `$$VERSION$$` literally to Gradle; the metadata now uses `prebuild`, where F-Droid substitutes that placeholder. The `checkupdates` job also could not parse version information from the computed Kotlin DSL, so version tags include the version code as SemVer build metadata. It now detects `v0.33.5+3305`; the metadata and draft list that latest release. Rerun the pipeline and confirm the build and reports before marking these items complete.
 
 * [ ] All pipelines should pass.
 * [ ] All warnings and errors in the Reports tab should be fixed or explained.
