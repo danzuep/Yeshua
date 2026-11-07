@@ -1,26 +1,20 @@
 CHANGELOG
 ---------
 
-#### Next release
-- Changes:
-  - Translations are now built from the table on https://ebible.org/download.php and downloaded as USFM; users can add their own download sites
-  - The default translation list ships as [app/src/main/assets/translations.csv](../app/src/main/assets/translations.csv), refreshed by a workflow; the about page is https://ebible.org/about.php
-  - The reader now shows USFM text as flowing paragraphs with section headings, poetry lines and superscript verse numbers; tap a verse to select it, long press for more actions. Bookmarks, notes and highlights show inline
-  - Remove the simple reading mode setting, the per-verse buttons and parallel translations in the chapter list (parallels are still in the verse detail), which don't fit flowing text
-  - Copying or sharing multiple verses now always consolidates consecutive verses, with a plain text verse number before each verse; the "Consolidate verses when sharing" setting is removed
-  - Remove Strong's Numbers and cross references, and the third-party translation service they depended on
-- Update dependencies:
-  - Gradle to 7.6
-  - Android Gradle plugin to 7.3.1
-  - Build tool to 33.0.1
-  - Compile and Target SDK to 33
-  - Kotlin to 1.8.0, Coroutines to 1.6.4, Kover to 0.6.1
-  - AndroidX Activity to 1.6.1, Annotation to 1.5.0, AppCompat to 1.5.1, Core to 1.9.0, Lifecycle to 2.5.1, Constraint Layout to 2.1.4, Test to 1.5.0
-  - Firebase BOM to 31.1.1, Crashlytics Gradle to 2.9.2
-  - Hilt to 2.44.2
-  - Material Component to 1.7.0
-  - Mockk to 1.13.3
-  - Roblectric to 4.9.2
+#### v0.28.3 (2026-11-05)
+- Use eBible.org's translations.csv as the default translation catalog, refreshed by a workflow; see https://ebible.org/about.php.
+
+#### v0.26.0 (2026-11-03)
+- Always consolidate copied and shared verses, with inline verse numbers; remove the "Consolidate verses when sharing" setting.
+
+#### v0.22.0 (2026-11-01)
+- Download translations as USFM from the eBible.org table at https://ebible.org/download.php, with support for custom download sites.
+- Render USFM as flowing paragraphs with section headings, poetry lines and superscript verse numbers; tap a verse to select it and long press for more actions. Show bookmarks, notes and highlights inline.
+- Remove simple reading mode, per-verse buttons and parallel translations in the chapter list; parallel comparison remains available in verse details.
+- Remove Strong's Numbers and cross references, and the third-party service they depended on.
+
+#### v0.21.3 (2026-11-01)
+- Add eBible USFM conversion support.
 
 #### v0.21.0
 - New features:
