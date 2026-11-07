@@ -15,9 +15,9 @@ RepoType: git
 Repo: https://github.com/danzuep/Yeshua.git
 
 Builds:
-  - versionName: 0.33.4
-    versionCode: 3304
-    commit: 0d2a4f01834e57cb25637f58bd5e978606f8dc47
+  - versionName: 0.33.5
+    versionCode: 3305
+    commit: 31cd8b942dd75d50b35929181f56ce76eb149f6d
     subdir: app
     gradle:
       - yes
@@ -26,5 +26,5 @@ Builds:
 AutoUpdateMode: Version
 UpdateCheckMode: Tags ^v[0-9.]+\+[0-9]+$
 UpdateCheckData: '|^v[0-9.]+\+([0-9]+)$||^v([0-9.]+)\+[0-9]+$'
-CurrentVersion: 0.33.4
-CurrentVersionCode: 3304
+CurrentVersion: 0.33.5
+CurrentVersionCode: 3305
