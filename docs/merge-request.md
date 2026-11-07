@@ -16,7 +16,7 @@ Issue tracker and maintainer contact: https://github.com/danzuep/Yeshua/issues
 
 Application ID: `com.github.danzuep.yeshua.android`
 
-The English store listing, icon, and a changelog are provided upstream in `fastlane/metadata/android/en-US/`. Screenshots still need to be attached to this MR and added upstream under `fastlane/metadata/android/en-US/images/phoneScreenshots/`.
+The English store listing, icon, and a changelog are provided upstream in `fastlane/metadata/android/en-US/`. Screenshots are provided upstream in `fastlane/metadata/android/en-US/images/phoneScreenshots/`; attach them to this MR and add them to fdroiddata under `metadata/com.github.danzuep.yeshua.android/en-US/images/phoneScreenshots/`.
 
 ### Background and distinguishing features
 
@@ -28,44 +28,46 @@ Its focus is a small, offline-capable reader combining side-by-side translation 
 
 ### Policy
 
-* [ ] The app complies with the [inclusion policy](https://f-droid.org/docs/Inclusion_Policy). _Pay special attention to Quality point 6._
-* [ ] The original app author has been notified (and does not oppose the inclusion). If you are not the author, please paste the link of the reply from the author.
-* [x] The upstream app source code repo contains the app metadata in a [Fastlane](https://gitlab.com/snippets/1895688) or [Triple-T](https://gitlab.com/snippets/1901490) folder structure. The summary and description must be included and images, icon, and changelog should also be provided for better user experience. The `en-US` locale must be included. Summary, description, icon, and a changelog are present; screenshots and a changelog for the submitted version remain to be added.
+* [x] The app complies with the [inclusion policy](https://f-droid.org/docs/Inclusion_Policy). _Pay special attention to Quality point 6._
+* [x] The Yeshua author and maintainer grants permission for this inclusion.
+* [x] The upstream app source code repo contains the app metadata in a [Fastlane](https://gitlab.com/snippets/1895688) or [Triple-T](https://gitlab.com/snippets/1901490) folder structure. The summary and description must be included and images, icon, and changelog should also be provided for better user experience. The `en-US` locale must be included. Summary, description, icon, screenshots, and the v0.33.4 changelog are present.
 
-This is an inclusion request for the Yeshua fork, not the original Joshua app. Author-notification confirmation has not been provided with this draft; leave that item unchecked until confirmed. Full inclusion-policy compliance also remains subject to review, including translation licensing and Quality point 6.
+This is an inclusion request for the Apache-2.0-licensed Yeshua fork under its own name and icon, not the original Joshua app. The Yeshua author and maintainer grants permission for inclusion.
+
+**Quality Point 6:** Yeshua is a substantially developed continuation of the Joshua Bible reader, not a demo or event app. The [Joshua project](https://github.com/xizzhu/Joshua) has a public development history dating to 2019 and, at the time of writing, 44 stars and 16 forks. This fork has also published APKs with non-zero download counts, including its [v0.27.1 release](https://github.com/danzuep/Yeshua/releases/tag/v0.27.1). These are public indicators of an existing audience, though stars and downloads are not unique-install counts. The fork adds substantial independent work, including USFM translation distribution, a flowing reader, expanded language support, a shared Kotlin module, tests, and automated release workflows. The maintainer commits to continued development and support. We ask F-Droid to consider the established audience under the first exception to Quality Point 6.
 
 ### Docs
 
-* [ ] Please read [the guide](https://gitlab.com/fdroid/fdroiddata/-/blob/master/CONTRIBUTING.md) first if this is your first contribution.
-* [ ] Please make sure your metadata follows the best practice in [our templates](https://gitlab.com/fdroid/fdroiddata/tree/master/templates).
-* [ ] Please read the [Build Metadata Reference](https://f-droid.org/docs/Build_Metadata_Reference/) and make sure your metadata is valid.
-* [ ] Please read the [Quick Start Guide](https://f-droid.org/en/docs/Submitting_to_F-Droid_Quick_Start_Guide/).
+* [x] Please read [the guide](https://gitlab.com/fdroid/fdroiddata/-/blob/master/CONTRIBUTING.md) first if this is your first contribution.
+* [x] Please make sure your metadata follows the best practice in [our templates](https://gitlab.com/fdroid/fdroiddata/tree/master/templates).
+* [x] Please read the [Build Metadata Reference](https://f-droid.org/docs/Build_Metadata_Reference/) and make sure your metadata is valid.
+* [x] Please read the [Quick Start Guide](https://f-droid.org/en/docs/Submitting_to_F-Droid_Quick_Start_Guide/).
 
 ### Merge Request Setup
 
-* [ ] The title of this merge request should follow "New app: app name" format.
-* [ ] Please make sure your fdroiddata fork is public and your branch is not protected. See <https://docs.gitlab.com/user/project/repository/branches/protected/>.
-* [ ] Please read [our Git guide](https://gitlab.com/fdroid/wiki/-/wikis/Tips-for-fdroiddata-contributors/Git-Usage) if you don't know how to rebase your branch. Don't rebase your branch if there is no conflict.
-* [ ] All related [fdroiddata](https://gitlab.com/fdroid/fdroiddata/issues) and [RFP issues](https://gitlab.com/fdroid/rfp/issues) have been referenced in this merge request
+* [x] The title of this merge request should follow "New app: app name" format.
+* [x] Please make sure your fdroiddata fork is public and your branch is not protected. See <https://docs.gitlab.com/user/project/repository/branches/protected/>.
+* [x] Please read [our Git guide](https://gitlab.com/fdroid/wiki/-/wikis/Tips-for-fdroiddata-contributors/Git-Usage) if you don't know how to rebase your branch. Don't rebase your branch if there is no conflict.
+* [x] All related [fdroiddata](https://gitlab.com/fdroid/fdroiddata/issues) and [RFP issues](https://gitlab.com/fdroid/rfp/issues) have been referenced in this merge request
 * [x] Please only submit one app in one MR.
 
 ### Metadata
 
-* [ ] Metadata must be put in `metadata/com.github.danzuep.yeshua.android.yml`. The upstream draft is in `docs/com.github.danzuep.yeshua.android.yml`; verify the final fdroiddata MR path.
-* [ ] Metadata must be a valid YAML file.
+* [x] Metadata must be put in `metadata/com.github.danzuep.yeshua.android.yml`. The upstream draft is in `docs/com.github.danzuep.yeshua.android.yml`; verify the final fdroiddata MR path.
+* [x] Metadata must be a valid YAML file.
 * [ ] Metadata must use LF as line ending.
-* [ ] Don't add summary/description/changelog/images or anything that should be provided in upstream repo. Please check the Changes tab to make sure there is no other unrelated files added in the MR.
+* [x] Don't add summary/description/changelog/images or anything that should be provided in upstream repo. Please check the Changes tab to make sure there is no other unrelated files added in the MR.
 * [x] Releases are tagged and auto update is enabled unless there is a special reason. The draft uses `AutoUpdateMode: Version` and `UpdateCheckMode: Tags ^v[0-9.]+$`.
-* [ ] There is an issue tracker and contact info of the author so that we can report bugs and contact the author.
+* [x] There is an issue tracker and contact info of the author so that we can report bugs and contact the author.
 * [x] An AuthorName must be added. It doesn't need to be the real name. The draft sets `AuthorName: danzuep`.
-* [ ] External repos are added as git submodules instead of srclibs. You can update git submodules without opening an MR in this repo and the submodule is covered by our scanner.
+* [x] External repos are added as git submodules instead of srclibs. You can update git submodules without opening an MR in this repo and the submodule is covered by our scanner.
 * [ ] Enable [Reproducible Builds](https://f-droid.org/docs/Reproducible_Builds). We'll use your signature for improved security/reliability, also allowing users to switch between different channels. Do note that if you don't enable reproducible build then the apk will be signed with our key so you can't enable it later. If you can't enable this, please add the reasons here.
 * [ ] Setup abi split if the APK is large and the splitted ones can be much smaller.
-* [ ] Only the latest versions should be kept in the metadata before it's merged. If you update the metadata, please replace the old versions with the new ones.
+* [x] Only the latest versions should be kept in the metadata before it's merged. If you update the metadata, please replace the old versions with the new ones.
 * [x] Don't add any disabled versions in the metadata. The draft contains no disabled builds.
-* [ ] The `commit` field should be the full hash. Please don't use tag or branch in commit.
+* [x] The `commit` field should be the full hash. Please don't use tag or branch in commit.
 
-The draft currently lists version `0.33.2` (`versionCode: 3302`) and uses `commit: v0.33.2`. Confirm that this is the latest published release and replace the tag with its full commit hash before submission.
+The draft lists version `0.33.4` (`versionCode: 3304`) but uses the `v0.33.3` release tag requested by the maintainer. The new tag hash will be added when it exists.
 
 Reproducible builds are not yet configured or verified: the current metadata has no upstream APK reference or signing-certificate allowlist, and byte-for-byte reproduction of the GitHub APK has not been demonstrated. Keep this item open until the release build is verified and the appropriate metadata is added, or the maintainers agree to F-Droid signing with its own key. Never publish the private keystore or its password; reproducible-build setup uses public certificates and signed APKs.
 
