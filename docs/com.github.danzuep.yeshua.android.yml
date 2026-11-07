@@ -21,9 +21,8 @@ Builds:
     subdir: app
     gradle:
       - yes
-    # versionName/versionCode are derived from this property (see app/build.gradle.kts).
     gradleprops:
-      - appVersion=%v
+      - appVersion=$$VERSION$$
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags ^v[0-9.]+$
