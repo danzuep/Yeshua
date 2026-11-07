@@ -24,6 +24,7 @@ Builds:
     prebuild: echo "appVersion=$$VERSION$$" >> ../gradle.properties
 
 AutoUpdateMode: Version
-UpdateCheckMode: Tags ^v[0-9.]+$
+UpdateCheckMode: Tags ^v[0-9.]+\+[0-9]+$
+UpdateCheckData: '|^v[0-9.]+\+([0-9]+)$||^v([0-9.]+)\+[0-9]+$'
 CurrentVersion: 0.33.4
 CurrentVersionCode: 3304

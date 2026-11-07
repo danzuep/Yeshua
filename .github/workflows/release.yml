@@ -40,8 +40,10 @@ jobs:
     - name: Resolve version
       run: |
         if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-          echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
-          echo "NAME=Yeshua-${GITHUB_REF_NAME}" >> "$GITHUB_ENV"
+          version=${GITHUB_REF_NAME#v}
+          version=${version%%+*}
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+          echo "NAME=Yeshua-v$version" >> "$GITHUB_ENV"
         else
           echo "VERSION=" >> "$GITHUB_ENV"
           echo "NAME=Yeshua-${GITHUB_REF_NAME//\//-}" >> "$GITHUB_ENV"
