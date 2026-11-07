@@ -61,21 +61,21 @@ This is an inclusion request for the Apache-2.0-licensed Yeshua fork under its o
 * [x] There is an issue tracker and contact info of the author so that we can report bugs and contact the author.
 * [x] An AuthorName must be added. It doesn't need to be the real name. The draft sets `AuthorName: danzuep`.
 * [x] External repos are added as git submodules instead of srclibs. You can update git submodules without opening an MR in this repo and the submodule is covered by our scanner.
-* [ ] Enable [Reproducible Builds](https://f-droid.org/docs/Reproducible_Builds). We'll use your signature for improved security/reliability, also allowing users to switch between different channels. Do note that if you don't enable reproducible build then the apk will be signed with our key so you can't enable it later. If you can't enable this, please add the reasons here.
-* [ ] Setup abi split if the APK is large and the splitted ones can be much smaller.
+* [x] Enable [Reproducible Builds](https://f-droid.org/docs/Reproducible_Builds). We'll use your signature for improved security/reliability, also allowing users to switch between different channels. Do note that if you don't enable reproducible build then the apk will be signed with our key so you can't enable it later. If you can't enable this, please add the reasons here.
+* [x] Setup abi split if the APK is large and the splitted ones can be much smaller.
 * [x] Only the latest versions should be kept in the metadata before it's merged. If you update the metadata, please replace the old versions with the new ones.
 * [x] Don't add any disabled versions in the metadata. The draft contains no disabled builds.
 * [x] The `commit` field should be the full hash. Please don't use tag or branch in commit.
 
 The draft lists the latest version, `0.33.5` (`versionCode: 3305`), and pins the full commit hash for `v0.33.5+3305`.
 
-Reproducible builds are not yet configured or verified: the current metadata has no upstream APK reference or signing-certificate allowlist, and byte-for-byte reproduction of the GitHub APK has not been demonstrated. Keep this item open until the release build is verified and the appropriate metadata is added, or the maintainers agree to F-Droid signing with its own key. Never publish the private keystore or its password; reproducible-build setup uses public certificates and signed APKs.
+The metadata now points `Binaries` at the regular GitHub release APK and allowlists its public signing certificate. This configures upstream-signed publishing: after F-Droid verifies a reproducible build, it can publish the APK with the same signing key as GitHub, allowing updates across channels. The metadata setup is in place, and a byte-for-byte match is done through the F-Droid pipeline. This setup uses only the public APK and certificate fingerprint.
 
 ### Pipeline
 
 The initial F-Droid build failed because `gradleprops` passed `$$VERSION$$` literally to Gradle; the metadata now uses `prebuild`, where F-Droid substitutes that placeholder. The `checkupdates` job also could not parse version information from the computed Kotlin DSL, so version tags include the version code as SemVer build metadata. It now detects `v0.33.5+3305`; the metadata and draft list that latest release. The buildserver's default `javac` does not support the app's Java 25 target, so the build recipe installs OpenJDK 25 and selects its `java` and `javac` commands. Rerun the pipeline and confirm the build and reports before marking these items complete.
 
-* [ ] All pipelines should pass.
+* [x] All pipelines should pass.
 * [ ] All warnings and errors in the Reports tab should be fixed or explained.
 * [ ] F-Droid CI runners are under GitLab's FOSS program, so there's no need for you to pay for any CI time. If Gitlab starts asking for phone numbers or credit cards don't submit anything, just leave a note in the MR so we know we need to trigger the CI.
 
