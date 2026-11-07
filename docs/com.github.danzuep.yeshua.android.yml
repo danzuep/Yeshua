@@ -14,10 +14,6 @@ AutoName: Yeshua
 RepoType: git
 Repo: https://github.com/danzuep/Yeshua.git
 
-Binaries: https://github.com/danzuep/Yeshua/releases/download/v%v+%c/Yeshua-v%v.apk
-AllowedAPKSigningKeys:
-  - 251db968637432563e19f7da98cbe2994eb15e0f6aa194b4cfc99cbac9948860
-
 Builds:
   - versionName: 0.33.5
     versionCode: 3305
@@ -30,7 +26,10 @@ Builds:
       - update-alternatives --auto javac
     gradle:
       - yes
+    binary: https://github.com/danzuep/Yeshua/releases/download/v%v+%c/Yeshua-v%v.apk
     prebuild: echo "appVersion=$$VERSION$$" >> ../gradle.properties
+
+AllowedAPKSigningKeys: 251db968637432563e19f7da98cbe2994eb15e0f6aa194b4cfc99cbac9948860
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags ^v[0-9.]+\+[0-9]+$
