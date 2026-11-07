@@ -1,7 +1,7 @@
 # Template for the F-Droid inclusion merge request to https://gitlab.com/fdroid/fdroiddata
 # (copy to metadata/com.github.danzuep.yeshua.android.yml). Store listing text comes from fastlane/.
 Categories:
-  - Reading
+  - Religion
 License: Apache-2.0
 AuthorName: danzuep
 WebSite: https://github.com/danzuep/Yeshua
@@ -21,9 +21,8 @@ Builds:
     subdir: app
     gradle:
       - yes
-    # versionName/versionCode are derived from this property (see app/build.gradle.kts).
     gradleprops:
-      - appVersion=%v
+      - appVersion=$$VERSION$$
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags ^v[0-9.]+$
