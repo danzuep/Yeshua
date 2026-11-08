@@ -168,11 +168,9 @@ internal fun parseReference(query: String, bookNames: List<String>, bookShortNam
                     .takeIf { it >= 0 }
             ?: BOOK_CODES.indexOfFirst { it.lowercase(Locale.getDefault()) == bookName.replace(" ", "") }
                     .takeIf { it >= 0 }
-            ?: (bookName.length >= 3).takeIf { it }?.let {
-                bookNames.indexOfFirst { it.normalizeBookName().startsWith(bookName) }.takeIf { it >= 0 }
-                        ?: bookShortNames.indexOfFirst { it.normalizeBookName().startsWith(bookName) }.takeIf { it >= 0 }
-            }
-            ?: -1
+            ?: bookNames.indexOfFirst { bookName.length >= 3 && it.normalizeBookName().startsWith(bookName) }
+                    .takeIf { it >= 0 }
+            ?: bookShortNames.indexOfFirst { bookName.length >= 3 && it.normalizeBookName().startsWith(bookName) }
     if (bookIndex < 0) return null
 
     val chapterIndex = chapter.toIntOrNull()?.takeIf { it >= 1 }?.minus(1) ?: return null
