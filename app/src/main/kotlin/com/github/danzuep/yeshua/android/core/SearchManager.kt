@@ -168,7 +168,10 @@ internal fun parseReference(query: String, bookNames: List<String>, bookShortNam
                     .takeIf { it >= 0 }
             ?: BOOK_CODES.indexOfFirst { it.lowercase(Locale.getDefault()) == bookName.replace(" ", "") }
                     .takeIf { it >= 0 }
-            ?: COMMON_ABBREVIATIONS[bookName.replace(" ", "")]
+            ?: (bookName.length >= 3).takeIf { it }?.let {
+                bookNames.indexOfFirst { it.normalizeBookName().startsWith(bookName) }.takeIf { it >= 0 }
+                        ?: bookShortNames.indexOfFirst { it.normalizeBookName().startsWith(bookName) }.takeIf { it >= 0 }
+            }
             ?: -1
     if (bookIndex < 0) return null
 
@@ -179,9 +182,6 @@ internal fun parseReference(query: String, bookNames: List<String>, bookShortNam
     val end = if (verseEnd.isEmpty()) start else verseEnd.toIntOrNull()?.takeIf { it >= start } ?: return null
     return BibleReference(bookIndex, chapterIndex, (start - 1)..(end - 1))
 }
-
-// Common abbreviations that are not in every translation's names, e.g. "Phil" is ambiguous between Philippians and Philemon.
-private val COMMON_ABBREVIATIONS = mapOf("phil" to 49, "phlp" to 49, "philip" to 49, "phm" to 56, "phlm" to 56, "philem" to 56)
 
 private fun String.normalizeBookName(): String =
         lowercase(Locale.getDefault()).replace(".", "").trim().split(Regex("\\s+")).joinToString(" ")
