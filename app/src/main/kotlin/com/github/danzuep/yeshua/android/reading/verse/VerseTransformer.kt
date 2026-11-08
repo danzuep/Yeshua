@@ -29,6 +29,7 @@ import com.github.danzuep.yeshua.android.core.toDisplayedVerse
 import com.github.danzuep.yeshua.android.core.Verse
 import com.github.danzuep.yeshua.android.core.VerseIndex
 import com.github.danzuep.yeshua.android.ui.recyclerview.BaseItem
+import com.github.danzuep.yeshua.android.utils.toTranslationDisplayName
 import com.github.danzuep.yeshua.android.utils.localized
 
 private val STRUCTURE = Regex("$HEADING([^$HEADING]*)$HEADING|$PARAGRAPH")
@@ -99,133 +100,50 @@ fun List<Verse>.toParagraphItems(
 }
 
 /**
- * Text for the clipboard: Markdown quotes, with the translation abbreviation after each reference and a final newline.
+ * Text for sharing and the clipboard: Markdown quotes, with the translation's display name after each reference and a blank line at the end.
  * Parallel translations follow as blocks of their own, each with the same kind of reference.
  */
 fun Collection<Verse>.toStringForCopy(bookName: String): String {
     if (isEmpty()) return ""
     val displayed = map { it.toDisplayedVerse() }
-    val translations = displayed.first().let { listOf(it.text) + it.parallel }
-    return translations.indices.joinToString("\n") { index ->
-        displayed.mapNotNull { verse -> (listOf(verse.text) + verse.parallel).getOrNull(index)?.let { Verse(verse.verseIndex, it, emptyList()) } }
-                .toStringForSharing(bookName, markdown = true, translationName = translations[index].translationShortName)
-    } + "\n"
+    val translationCount = displayed.first().parallel.size + 1
+    return (0 until translationCount).joinToString("\n") { index ->
+        val verses = displayed.mapNotNull { verse ->
+            (listOf(verse.text) + verse.parallel).getOrNull(index)?.let { Verse(verse.verseIndex, it, emptyList()) }
+        }
+        verses.toQuotedBlocks(bookName, verses.first().text.translationShortName.toTranslationDisplayName())
+    } + "\n\n"
 }
 
-fun Collection<Verse>.toStringForSharing(bookName: String, markdown: Boolean = false, translationName: String? = null): String {
-    val sortedVerses = sortedBy { verse ->
-        val verseIndex = verse.verseIndex
-        verseIndex.bookIndex * 100000 + verseIndex.chapterIndex * 1000 + verseIndex.verseIndex
+fun Verse.toStringForCopy(bookName: String): String = listOf(this).toStringForCopy(bookName)
+
+/** One block per run of consecutive verses, e.g. "John 1:16-17 WEB" over "> 16 A 17 B". */
+private fun List<Verse>.toQuotedBlocks(bookName: String, translationName: String): String {
+    val sorted = sortedBy { it.verseIndex.bookIndex * 100000 + it.verseIndex.chapterIndex * 1000 + it.verseIndex.verseIndex }
+    if (sorted.map { it.verseIndex.bookIndex to it.verseIndex.chapterIndex }.distinct().size > 1) {
+        return sorted.toStringAcrossChapters(bookName, translationName)
     }
-
-    if (size == 1) {
-        return StringBuilder().apply {
-            sortedVerses.forEach { verse -> append(verse, bookName, markdown, translationName) }
-        }.toString()
+    val runs = sorted.fold(mutableListOf<MutableList<Verse>>()) { runs, verse ->
+        if (runs.lastOrNull()?.last()?.verseIndex?.verseIndex?.plus(1) == verse.verseIndex.verseIndex) runs.last().add(verse)
+        else runs.add(mutableListOf(verse))
+        runs
     }
-
-    // format (without parallel):
-    // <book name> <chapter index>:<start verse index>-<end verse index>
-    // <verse number> <verse text> <verse number> <verse text>
-    // <book name> <chapter index>:<verse index>
-    // <verse text>
-    //
-    // format (with parallel):
-    // <book name> <chapter index>:<start verse index>-<end verse index>
-    // <primary translation>: <verse text>
-    // <parallel translation 1>: <verse text>
-    // <parallel translation 2>: <verse text>
-    // <book name> <chapter index>:<verse index>
-    // <primary translation>: <verse text>
-    // <parallel translation 1>: <verse text>
-    // <parallel translation 2>: <verse text>
-
-    // step 1: find all start - end verse index pairs
-    val verseGroups = arrayListOf<Pair<Int, Int>>()
-    sortedVerses.forEach { verse ->
-        val lastVerseIndexPair = verseGroups.lastOrNull()
-        if (lastVerseIndexPair != null && lastVerseIndexPair.second + 1 == verse.verseIndex.verseIndex) {
-            verseGroups[verseGroups.size - 1] = lastVerseIndexPair.copy(second = verse.verseIndex.verseIndex)
-        } else {
-            verseGroups.add(Pair(verse.verseIndex.verseIndex, verse.verseIndex.verseIndex))
-        }
+    return runs.joinToString("\n\n") { run ->
+        val chapter = (run.first().verseIndex.chapterIndex + 1).localized()
+        val first = run.first().verseIndex.verseIndex + 1
+        val last = run.last().verseIndex.verseIndex + 1
+        val reference = "$bookName $chapter:${first.localized()}" + if (last > first) "-${last.localized()}" else ""
+        val body = if (run.size == 1) run.single().text.text
+        else run.joinToString(" ") { "${(it.verseIndex.verseIndex + 1).localized()} ${it.text.text}" }
+        "$reference $translationName\n${body.quoted()}"
     }
-
-    if (sortedVerses.map { it.verseIndex.bookIndex to it.verseIndex.chapterIndex }.distinct().size > 1) {
-        return sortedVerses.toStringAcrossChapters(bookName, markdown, translationName)
-    }
-
-    // step 2: build the string for sharing
-    val stringBuilder = StringBuilder()
-
-    var currentVerseGroupIndex = 0
-    var bodyStart = 0
-    val parallelVersesBuilder = Array(sortedVerses.first().parallel.size) { StringBuilder() }
-    sortedVerses.forEach { verse ->
-        val currentVerseGroup = verseGroups[currentVerseGroupIndex]
-
-        // start of the verse group
-        if (verse.verseIndex.verseIndex == currentVerseGroup.first) {
-            if (stringBuilder.isNotEmpty()) stringBuilder.append("\n\n")
-
-            stringBuilder.append(bookName).append(' ')
-                    .append((verse.verseIndex.chapterIndex + 1).localized()).append(':').append((verse.verseIndex.verseIndex + 1).localized())
-            if (currentVerseGroup.first < currentVerseGroup.second) {
-                stringBuilder.append('-').append((currentVerseGroup.second + 1).localized())
-            }
-            if (markdown) translationName?.let { stringBuilder.append(' ').append(it) }
-            stringBuilder.append('\n')
-            bodyStart = stringBuilder.length
-
-            if (verse.parallel.isNotEmpty()) {
-                stringBuilder.append(verse.text.translationShortName).append(": ")
-
-                verse.parallel.forEachIndexed { index, parallel ->
-                    with(parallelVersesBuilder[index]) {
-                        clear()
-                        append(parallel.translationShortName).append(": ")
-                    }
-                }
-            }
-        }
-
-        // multi-verse groups get a plain text verse number with a space either side before each verse
-        val isRange = currentVerseGroup.first < currentVerseGroup.second
-        val numberPrefix = if (isRange) "${(verse.verseIndex.verseIndex + 1).localized()} " else ""
-        val isGroupStart = verse.verseIndex.verseIndex == currentVerseGroup.first
-        if (!isGroupStart) stringBuilder.append(' ')
-        stringBuilder.append(numberPrefix).append(verse.text.text)
-
-        verse.parallel.forEachIndexed { index, parallel ->
-            with(parallelVersesBuilder[index]) {
-                if (!isGroupStart) append(' ')
-                append(numberPrefix).append(parallel.text)
-            }
-        }
-
-        // end of the verse group
-        if (verse.verseIndex.verseIndex == currentVerseGroup.second) {
-            parallelVersesBuilder.forEach { parallelBuilder ->
-                stringBuilder.append('\n').append(parallelBuilder)
-            }
-            if (markdown) {
-                val body = stringBuilder.substring(bodyStart)
-                stringBuilder.setLength(bodyStart)
-                stringBuilder.append(body.quoted())
-            }
-
-            currentVerseGroupIndex++
-        }
-    }
-
-    return stringBuilder.toString()
 }
 
 /**
  * One block for verses of several chapters, e.g. "Isaiah 52:13-53:1" over "13 A 14 B 15 C ¶53:1 D".
  * The chapter mark is only copied here, where it shows where the next chapter starts.
  */
-private fun List<Verse>.toStringAcrossChapters(bookName: String, markdown: Boolean, translationName: String?): String {
+private fun List<Verse>.toStringAcrossChapters(bookName: String, translationName: String): String {
     val rightToLeft = ParagraphItem.isRightToLeft(first().text.text)
     // Isolated, so references and chapter marks keep their reading order inside right to left text.
     fun String.isolated() = if (rightToLeft) "${ParagraphItem.LEFT_TO_RIGHT_ISOLATE}$this${ParagraphItem.POP_DIRECTIONAL_ISOLATE}" else this
@@ -251,63 +169,14 @@ private fun List<Verse>.toStringAcrossChapters(bookName: String, markdown: Boole
         separator + first + last
     }.isolated()
 
-    fun body(text: (Verse) -> String): String = mapIndexed { index, verse ->
+    val body = mapIndexed { index, verse ->
         val number = (verse.verseIndex.verseIndex + 1).localized()
         val chapterStarts = index > 0 && verse.verseIndex.chapterIndex != this[index - 1].verseIndex.chapterIndex
         val label = if (chapterStarts) "${ParagraphItem.CHAPTER_MARK}${"${(verse.verseIndex.chapterIndex + 1).localized()}:$number".isolated()}" else "$number"
-        "$label ${text(verse)}"
+        "$label ${verse.text.text}"
     }.joinToString(" ")
 
-    val lines = if (first().parallel.isEmpty()) {
-        listOf(body { it.text.text })
-    } else {
-        listOf("${first().text.translationShortName}: " + body { it.text.text }) +
-                first().parallel.indices.map { parallelIndex ->
-                    "${first().parallel[parallelIndex].translationShortName}: " + body { it.parallel[parallelIndex].text }
-                }
-    }
-    val title = "$bookName $header" + if (markdown) translationName?.let { " $it" }.orEmpty() else ""
-    return title + "\n" + lines.joinToString("\n").let { if (markdown) it.quoted() else it }
+    return "$bookName $header $translationName\n" + body.quoted()
 }
 
 private fun String.quoted(): String = split('\n').joinToString("\n") { "> $it" }
-
-private fun StringBuilder.append(verse: Verse, bookName: String, markdown: Boolean, translationName: String?): StringBuilder {
-    if (isNotEmpty()) append(if (markdown) "\n\n" else "\n")
-
-    if (markdown) {
-        // format:
-        // <book name> <chapter index>:<verse index> <translation abbreviation>
-        // > <verse text>
-        // or, with parallel translations, one "> <translation>: <verse text>" line per translation
-        append(bookName).append(' ')
-                .append((verse.verseIndex.chapterIndex + 1).localized()).append(':').append((verse.verseIndex.verseIndex + 1).localized())
-        translationName?.let { append(' ').append(it) }
-        append('\n')
-        val body = if (verse.parallel.isEmpty()) verse.text.text else {
-            (listOf(verse.text) + verse.parallel).joinToString("\n") { "${it.translationShortName}: ${it.text}" }
-        }
-        append(body.quoted())
-    } else if (verse.parallel.isEmpty()) {
-        // format: <book name> <chapter index>:<verse index> <text>
-        append(bookName).append(' ')
-                .append((verse.verseIndex.chapterIndex + 1).localized()).append(':').append((verse.verseIndex.verseIndex + 1).localized()).append(' ')
-                .append(verse.text.text)
-    } else {
-        // format:
-        // <book name> <chapter verseIndex>:<verse verseIndex>
-        // <primary translation>: <verse text>
-        // <parallel translation 1>: <verse text>
-        // <parallel translation 2>: <verse text>
-        append(bookName).append(' ')
-                .append((verse.verseIndex.chapterIndex + 1).localized()).append(':').append((verse.verseIndex.verseIndex + 1).localized()).append('\n')
-                .append(verse.text.translationShortName).append(": ").append(verse.text.text).append('\n')
-        verse.parallel.forEach { text -> append(text.translationShortName).append(": ").append(text.text).append('\n') }
-        setLength(length - 1) // remove the appended space
-    }
-    return this
-}
-
-fun Verse.toStringForSharing(bookName: String): String = StringBuilder().append(this, bookName, false, null).toString()
-
-fun Verse.toStringForCopy(bookName: String): String = listOf(this).toStringForCopy(bookName)

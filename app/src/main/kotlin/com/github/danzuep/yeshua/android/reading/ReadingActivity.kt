@@ -56,7 +56,6 @@ import com.github.danzuep.yeshua.android.reading.verse.toBookIndex
 import com.github.danzuep.yeshua.android.reading.verse.toChapterIndex
 import com.github.danzuep.yeshua.android.reading.verse.toPagePosition
 import com.github.danzuep.yeshua.android.reading.verse.toStringForCopy
-import com.github.danzuep.yeshua.android.reading.verse.toStringForSharing
 import com.github.danzuep.yeshua.android.translations.TranslationsActivity
 import com.github.danzuep.yeshua.android.ui.highlightSwatch
 import com.github.danzuep.yeshua.android.ui.dialog
@@ -153,7 +152,7 @@ class ReadingActivity : BaseActivity<ActivityReadingBinding, ReadingViewModel.Vi
 
             shareToSystem(
                 title = getString(R.string.text_share_with),
-                text = selectedVerses.toStringForSharing(currentBookName())
+                text = selectedVerses.toStringForCopy(currentBookName())
             )
         } catch (e: Exception) {
             Logger.withTag(tag).e(e) { "Failed to share" }
