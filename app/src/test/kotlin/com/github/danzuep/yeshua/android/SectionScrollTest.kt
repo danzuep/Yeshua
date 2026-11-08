@@ -62,4 +62,19 @@ class SectionScrollTest {
         assertNull(SectionScroll.of(3, 7, 250, emptyMap(), 3, 0))
         assertNull(SectionScroll.of(3, 3, 250, heights, 3, 0))
     }
+
+    @Test
+    fun unmeasuredItemsAreEstimatedFromWeight() {
+        val scroll = SectionScroll.of(0, 3, 100, mapOf(0 to 100), firstPosition = 0, firstTop = 0, weightOf = { if (it == 2) 30 else 10 })!!
+        assertEquals(100 + 100 + 300, scroll.range)
+    }
+
+    @Test
+    fun rangeBarelyMovesAsItemsAreMeasured() {
+        val weights = listOf(10, 40, 20, 30)
+        val truth = weights.map { it * 10 }
+        val none = SectionScroll.of(0, 4, 100, mapOf(0 to truth[0]), 0, 0, weights::get)!!
+        val all = SectionScroll.of(0, 4, 100, truth.withIndex().associate { it.index to it.value }, 0, 0, weights::get)!!
+        assertEquals(all.range, none.range)
+    }
 }
