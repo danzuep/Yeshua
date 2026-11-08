@@ -250,8 +250,8 @@ class ReadingViewModel @Inject constructor(
         }
     }
 
-    suspend fun bookShortName(translationShortName: String, bookIndex: Int): String {
-        return bibleReadingManager.readBookShortNames(translationShortName)[bookIndex]
+    suspend fun bookName(translationShortName: String, bookIndex: Int): String {
+        return bibleReadingManager.readBookNames(translationShortName)[bookIndex]
     }
 
     /** The verses from [start] to [endVerse] of its chapter, as shown when reading. */

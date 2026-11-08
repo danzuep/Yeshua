@@ -127,11 +127,6 @@ class ReadingActivity : BaseActivity<ActivityReadingBinding, ReadingViewModel.Vi
         return status.bookNames.getOrElse(status.currentVerseIndex.bookIndex) { "" }
     }
 
-    private suspend fun currentBookShortName(): String {
-        val status = currentReadingStatus ?: return ""
-        return viewModel.bookShortName(status.currentTranslation, status.currentVerseIndex.bookIndex)
-    }
-
     private fun copy() {
         if (selectedVerses.isEmpty()) return
 
@@ -139,7 +134,7 @@ class ReadingActivity : BaseActivity<ActivityReadingBinding, ReadingViewModel.Vi
         actionMode?.finish()
         lifecycleScope.launch {
             try {
-                val bookName = currentBookShortName()
+                val bookName = currentBookName()
                 copyToClipBoard(
                     label = "${currentReadingStatus?.currentTranslation.orEmpty()} $bookName",
                     text = verses.toStringForCopy(bookName)
@@ -597,7 +592,7 @@ class ReadingActivity : BaseActivity<ActivityReadingBinding, ReadingViewModel.Vi
     override fun onVerseTextLongClicked(verse: Verse) {
         lifecycleScope.launch {
             try {
-                val bookName = viewModel.bookShortName(verse.text.translationShortName, verse.verseIndex.bookIndex)
+                val bookName = viewModel.bookName(verse.text.translationShortName, verse.verseIndex.bookIndex)
                 copyToClipBoard(
                     label = "${verse.text.translationShortName} $bookName",
                     text = verse.toStringForCopy(bookName)
