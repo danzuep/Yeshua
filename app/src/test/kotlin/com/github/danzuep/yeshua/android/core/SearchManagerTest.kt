@@ -286,6 +286,14 @@ class SearchManagerTest : BaseUnitTest() {
     }
 
     @Test
+    fun `test parseReference() finds Philippians 4-13 however it is written`() {
+        val philippians = BibleReference(49, 3, 12..12)
+        listOf("philippians 4 13", "phil 4.13", "Php4:13").forEach { query ->
+            assertEquals(philippians, parseReference(query, MockContents.kjvBookNames, MockContents.kjvBookShortNames), query)
+        }
+    }
+
+    @Test
     fun `test parseReference()`() {
         val bookNames = MockContents.kjvBookNames
         val bookShortNames = MockContents.kjvBookShortNames
@@ -311,7 +319,8 @@ class SearchManagerTest : BaseUnitTest() {
         assertNull(parse("John 1:5-3"))
         assertNull(parse("Unknown 1"))
         assertNull(parse("Joh 1"))
-        assertNull(parse("John 1 2"))
+        assertNull(parse("John 1 2 3"))
+        assertEquals(BibleReference(42, 0, 1..1), parse("John 1 2"))
 
         assertEquals(BibleReference(42, 0), parse("JHN 1"))
         assertEquals(BibleReference(42, 0), parse("jhn 1"))
