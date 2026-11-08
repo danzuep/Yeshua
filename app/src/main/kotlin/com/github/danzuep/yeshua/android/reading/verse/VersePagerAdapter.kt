@@ -113,6 +113,10 @@ class VersePagerAdapter(
         forEachAttachedPage { it.scrollToChapterStart(position) }
     }
 
+    fun scrollToVerse(verseIndex: VerseIndex) {
+        forEachAttachedPage { it.scrollToVerse(verseIndex) }
+    }
+
     private fun forEachAttachedPage(action: (Page) -> Unit) {
         attachedRecyclerView?.let { recyclerView ->
             for (index in 0 until recyclerView.childCount) {
@@ -322,6 +326,14 @@ private class Page(
         if (target >= 0) scrollToPosition(target, 0)
     }
 
+
+    /** A page reused from RecyclerView's cache is not rebound, so it keeps the scroll position of its last visit. */
+    fun scrollToVerse(verseIndex: VerseIndex) {
+        val chapterPosition = runCatching { verseIndex.toPagePosition() }.getOrNull() ?: return
+        if (chapterPosition != pagePosition || !hasRendered) return
+        val target = renderedItems.positionOfVerse(verseIndex).takeIf { it >= 0 } ?: renderedItems.positionOfChapter(chapterPosition)
+        if (target >= 0) scrollToPosition(target, 0)
+    }
 
     fun containsChapter(position: Int): Boolean = chapters.containsKey(position)
 
