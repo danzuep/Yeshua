@@ -170,6 +170,8 @@ class ReadingActivity : BaseActivity<ActivityReadingBinding, ReadingViewModel.Vi
     // Several reports can be in flight before the saved position comes back, so a single value could miss the match.
     private val versesReportedByScroll = mutableSetOf<VerseIndex>()
     private var userSwipingPager = false
+    private var redirectingSwipe = false
+    private var lastSelectedPage = -1
     private val referenceBackStack = ArrayDeque<VerseIndex>()
 
     // The launcher alias reuses a running reader, so an open-book request arrives here instead of onCreate().
@@ -248,6 +250,27 @@ class ReadingActivity : BaseActivity<ActivityReadingBinding, ReadingViewModel.Vi
             }
 
             override fun onPageSelected(position: Int) {
+                val previousPage = lastSelectedPage
+                lastSelectedPage = position
+                if (redirectingSwipe) return
+                if (userSwipingPager && previousPage >= 0) {
+                    // The page may have been scrolled into a neighbouring chapter, so a swipe moves on from the chapter being read.
+                    val readingPage = currentReadingStatus?.currentVerseIndex?.takeIf { it.isValid() }?.toPagePosition()
+                    val target = readingPage?.plus(position - previousPage)
+                    if (target != null && target != position && target in 0 until Bible.TOTAL_CHAPTER_COUNT) {
+                        redirectingSwipe = true
+                        try {
+                            verseViewPager.setCurrentItem(target, false)
+                        } finally {
+                            redirectingSwipe = false
+                        }
+                        lastSelectedPage = target
+                        versePagerAdapter.scrollToChapterStart(target)
+                        appBar.setExpanded(true, true)
+                        viewModel.selectChapter(target.toBookIndex(), target.toChapterIndex())
+                        return
+                    }
+                }
                 val bookIndex = position.toBookIndex()
                 val chapterIndex = position.toChapterIndex()
                 if (userSwipingPager) {
