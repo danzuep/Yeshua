@@ -294,6 +294,15 @@ class SearchManagerTest : BaseUnitTest() {
     }
 
     @Test
+    fun `test parseReference() finds Philippians 4-13 when the translation names lack the abbreviation`() {
+        val names = MockContents.kjvBookNames.mapIndexed { i, n -> if (i == 49) "Philippians" else n }
+        val shortNames = MockContents.kjvBookShortNames.mapIndexed { i, n -> if (i == 49) "Philippians" else n }
+        listOf("philippians 4 13", "phil 4.13", "Phil4.13", "Php4:13").forEach { query ->
+            assertEquals(BibleReference(49, 3, 12..12), parseReference(query, names, shortNames), query)
+        }
+    }
+
+    @Test
     fun `test parseReference()`() {
         val bookNames = MockContents.kjvBookNames
         val bookShortNames = MockContents.kjvBookShortNames
