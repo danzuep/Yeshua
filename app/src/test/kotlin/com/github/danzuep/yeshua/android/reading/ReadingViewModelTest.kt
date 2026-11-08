@@ -105,6 +105,7 @@ class ReadingViewModelTest : BaseUnitTest() {
         every { bibleReadingManager.parallelTranslations() } returns flowOf(listOf(MockContents.cuvShortName))
         every { bibleReadingManager.currentVerseIndex() } returns flowOf(VerseIndex(1, 2, 3))
         coEvery { bibleReadingManager.readBookNames(MockContents.kjvShortName) } returns MockContents.kjvBookNames
+        coEvery { bibleReadingManager.readBookShortNames(MockContents.kjvShortName) } returns MockContents.kjvBookShortNames
 
         readingViewModel = createViewModel()
 
@@ -127,6 +128,7 @@ class ReadingViewModelTest : BaseUnitTest() {
         every { bibleReadingManager.currentVerseIndex() } returns flowOf(VerseIndex(1, 2, 3))
         coEvery { bibleReadingManager.readBookNames(MockContents.kjvShortName) } throws RuntimeException("random exception")
         coEvery { bibleReadingManager.readBookNames(MockContents.cuvShortName) } returns MockContents.cuvBookNames
+        coEvery { bibleReadingManager.readBookShortNames(MockContents.cuvShortName) } returns MockContents.kjvBookShortNames
 
         readingViewModel = createViewModel()
         assertEquals(emptyList(), readingViewModel.viewState().first().currentReadingStatus?.bookNames)
@@ -307,8 +309,11 @@ class ReadingViewModelTest : BaseUnitTest() {
                         "${HEADING}Creation${HEADING}In the beginning${NOTE_MARK}fa note${NOTE_MARK} God created${NOTE_MARK}x1:1 Gen 1:1${NOTE_MARK} the heaven"), emptyList())
         )
         coEvery { bibleReadingManager.readBookNames(MockContents.kjvShortName) } returns MockContents.kjvBookNames
+        coEvery { bibleReadingManager.readBookShortNames(MockContents.kjvShortName) } returns MockContents.kjvBookShortNames
         coEvery { bibleReadingManager.readBookNames(MockContents.bbeShortName) } returns MockContents.bbeBookNames
+        coEvery { bibleReadingManager.readBookShortNames(MockContents.bbeShortName) } returns MockContents.kjvBookShortNames
         coEvery { bibleReadingManager.readBookNames(MockContents.cuvShortName) } returns MockContents.cuvBookNames
+        coEvery { bibleReadingManager.readBookShortNames(MockContents.cuvShortName) } returns MockContents.kjvBookShortNames
 
         val actions = collectViewActions()
 
@@ -367,6 +372,7 @@ class ReadingViewModelTest : BaseUnitTest() {
             bibleReadingManager.readStructuredVerses(MockContents.kjvShortName, verseIndex.bookIndex, verseIndex.chapterIndex)
         } returns listOf(Verse(verseIndex, Verse.Text(MockContents.kjvShortName, "In the beginning"), emptyList()))
         coEvery { bibleReadingManager.readBookNames(any()) } returns MockContents.kjvBookNames
+        coEvery { bibleReadingManager.readBookShortNames(any()) } returns MockContents.kjvBookShortNames
 
         val actions = collectViewActions()
 
@@ -407,7 +413,9 @@ class ReadingViewModelTest : BaseUnitTest() {
             )
         } returns MockContents.msgVersesWithKjvParallel
         coEvery { bibleReadingManager.readBookNames(MockContents.kjvShortName) } returns MockContents.kjvBookNames
+        coEvery { bibleReadingManager.readBookShortNames(MockContents.kjvShortName) } returns MockContents.kjvBookShortNames
         coEvery { bibleReadingManager.readBookNames(MockContents.msgShortName) } returns MockContents.msgBookNames
+        coEvery { bibleReadingManager.readBookShortNames(MockContents.msgShortName) } returns MockContents.kjvBookShortNames
 
         val actions = collectViewActions()
 
@@ -454,6 +462,7 @@ class ReadingViewModelTest : BaseUnitTest() {
             bibleReadingManager.readStructuredVerses(MockContents.kjvShortName, verseIndex.bookIndex, verseIndex.chapterIndex)
         } returns listOf(Verse(verseIndex, Verse.Text(MockContents.kjvShortName, "In the beginning"), emptyList()))
         coEvery { bibleReadingManager.readBookNames(MockContents.kjvShortName) } returns MockContents.kjvBookNames
+        coEvery { bibleReadingManager.readBookShortNames(MockContents.kjvShortName) } returns MockContents.kjvBookShortNames
 
         val actions = collectViewActions()
 
