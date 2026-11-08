@@ -151,10 +151,10 @@ private fun String.isWordCharacterBefore(index: Int): Boolean =
 private fun String.isWordCharacterAt(index: Int): Boolean =
         Character.isLetterOrDigit(Character.codePointAt(this, index)) || Character.codePointAt(this, index) == '_'.code
 
-private val REFERENCE_REGEX = Regex("""(.*?\S)\s*(\d+)(?:[:.](\d+)(?:\s*-\s*(\d+))?)?""")
+private val REFERENCE_REGEX = Regex("""(.*?\S)\s*(\d+)(?:(?:[:.]|\s+)(\d+)(?:\s*-\s*(\d+))?)?""")
 
 /**
- * Parses references such as "John 1", "John 1:4", "1 John 3:2-5", "Gen. 1:1", "JHN1.1" or "jhn 1" against the book names
+ * Parses references such as "John 1", "John 1:4", "John 1 4", "1 John 3:2-5", "Gen. 1:1", "JHN1.1" or "jhn 1" against the book names
  * (or short names, or 3-letter book codes) of a translation. Returns null if the query is not a reference, so it can be searched as text.
  */
 internal fun parseReference(query: String, bookNames: List<String>, bookShortNames: List<String>): BibleReference? {
