@@ -107,6 +107,8 @@ class CommonRecyclerView : RecyclerView {
     private val adapter: CommonAdapter = CommonAdapter(context).apply { setAdapter(this) }
     private var onItemsReordered: ((List<BaseItem>) -> Unit)? = null
     private var itemsMoved = false
+    private var scrollbarRange: Pair<Int, Int>? = null
+    private val itemHeights = HashMap<Int, Int>()
 
     private val itemTouchHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP or ItemTouchHelper.DOWN, 0) {
         override fun getMovementFlags(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder): Int =
@@ -149,8 +151,38 @@ class CommonRecyclerView : RecyclerView {
     }
 
     fun setSettings(settings: Settings) {
+        itemHeights.clear()
         adapter.setSettings(settings)
     }
+
+    /**
+     * Limits the vertical scroll bar to the items in [start, endExclusive), so it spans only that section of the list
+     * however many neighbouring items are loaded around it. A null range restores the default behaviour.
+     */
+    fun setScrollbarItemRange(range: Pair<Int, Int>?) {
+        if (range == null) itemHeights.clear()
+        scrollbarRange = range
+        invalidate()
+    }
+
+    private fun rangeScroll(): SectionScroll? {
+        val (start, end) = scrollbarRange ?: return null
+        val manager = layoutManager as? LinearLayoutManager ?: return null
+        if (childCount == 0) return null
+        for (i in 0 until childCount) {
+            val child = getChildAt(i)
+            val position = getChildAdapterPosition(child)
+            if (position in start until end) itemHeights[position] = manager.getDecoratedMeasuredHeight(child)
+        }
+        val first = getChildAt(0)
+        return SectionScroll.of(start, end, height, itemHeights, getChildAdapterPosition(first), manager.getDecoratedTop(first))
+    }
+
+    override fun computeVerticalScrollRange(): Int = rangeScroll()?.range ?: super.computeVerticalScrollRange()
+
+    override fun computeVerticalScrollOffset(): Int = rangeScroll()?.offset ?: super.computeVerticalScrollOffset()
+
+    override fun computeVerticalScrollExtent(): Int = rangeScroll()?.extent ?: super.computeVerticalScrollExtent()
 
     fun setItems(items: List<BaseItem>) {
         adapter.setItems(items)

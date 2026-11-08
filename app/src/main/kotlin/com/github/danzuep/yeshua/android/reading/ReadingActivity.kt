@@ -362,6 +362,9 @@ class ReadingActivity : BaseActivity<ActivityReadingBinding, ReadingViewModel.Vi
             if (!reportedByScroll && (chapterChanged || !versePagerAdapter.containsChapterInCurrentPage(status.currentVerseIndex))) {
                 val targetPage = status.currentVerseIndex.toPagePosition()
                 if (verseViewPager.currentItem != targetPage) verseViewPager.setCurrentItem(targetPage, false)
+                // A cached page is reused without a rebind, so it must be positioned explicitly.
+                val verse = status.currentVerseIndex
+                verseViewPager.post { versePagerAdapter.scrollToVerse(verse) }
             }
         }
         hideVerseDetail()
