@@ -107,7 +107,7 @@ class CommonRecyclerView : RecyclerView {
     private val adapter: CommonAdapter = CommonAdapter(context).apply { setAdapter(this) }
     private var onItemsReordered: ((List<BaseItem>) -> Unit)? = null
     private var itemsMoved = false
-    private var scrollbarRange: Pair<Int, Int>? = null
+    private var scrollbarSections = emptyList<Pair<Int, Int>>()
     private val itemHeights = HashMap<Int, Int>()
 
     private val itemTouchHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP or ItemTouchHelper.DOWN, 0) {
@@ -156,24 +156,26 @@ class CommonRecyclerView : RecyclerView {
     }
 
     /**
-     * Limits the vertical scroll bar to the items in [start, endExclusive), so it spans only that section of the list
-     * however many neighbouring items are loaded around it. A null range restores the default behaviour.
+     * Makes the vertical scroll bar span one section of the list, the one in the middle of the screen, however many
+     * neighbouring sections are loaded around it. Each section is [start, endExclusive) in item positions.
+     * Empty sections restore the default behaviour.
      */
-    fun setScrollbarItemRange(range: Pair<Int, Int>?) {
-        if (range == null) itemHeights.clear()
-        scrollbarRange = range
+    fun setScrollbarSections(sections: List<Pair<Int, Int>>) {
+        itemHeights.clear()
+        scrollbarSections = sections
         invalidate()
     }
 
     private fun rangeScroll(): SectionScroll? {
-        val (start, end) = scrollbarRange ?: return null
+        if (scrollbarSections.isEmpty() || childCount == 0) return null
         val manager = layoutManager as? LinearLayoutManager ?: return null
-        if (childCount == 0) return null
         for (i in 0 until childCount) {
             val child = getChildAt(i)
-            val position = getChildAdapterPosition(child)
-            if (position in start until end) itemHeights[position] = manager.getDecoratedMeasuredHeight(child)
+            itemHeights[getChildAdapterPosition(child)] = manager.getDecoratedMeasuredHeight(child)
         }
+        val middleChild = findChildViewUnder(width / 2F, height / 2F) ?: getChildAt(childCount / 2)
+        val middle = getChildAdapterPosition(middleChild)
+        val (start, end) = scrollbarSections.firstOrNull { middle >= it.first && middle < it.second } ?: return null
         val first = getChildAt(0)
         return SectionScroll.of(start, end, height, itemHeights, getChildAdapterPosition(first), manager.getDecoratedTop(first))
     }

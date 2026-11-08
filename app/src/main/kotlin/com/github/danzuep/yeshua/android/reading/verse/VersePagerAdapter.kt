@@ -247,7 +247,7 @@ private class Page(
         viewBinding.loadingSpinner.animate().setListener(null).cancel()
         viewBinding.verseList.alpha = 1.0F
         viewBinding.loadingSpinner.alpha = 1.0F
-        viewBinding.verseList.setScrollbarItemRange(null)
+        viewBinding.verseList.setScrollbarSections(emptyList())
         viewBinding.verseList.visibility = View.GONE
         viewBinding.loadingSpinner.visibility = View.VISIBLE
         viewBinding.verseList.setSettings(settings)
@@ -280,9 +280,11 @@ private class Page(
         renderedItems = combinedItems()
         if (renderedItems.isEmpty()) return
 
-        // The scroll bar spans this page's own chapter, not the neighbouring chapters loaded around it.
-        val chapterStart = renderedItems.positionOfChapter(pagePosition)
-        viewBinding.verseList.setScrollbarItemRange(chapterStart to chapterStart + chapters.getValue(pagePosition).size)
+        // The scroll bar spans one chapter at a time, the one in the middle of the screen.
+        var chapterStart = 0
+        viewBinding.verseList.setScrollbarSections(chapters.values.map { items ->
+            (chapterStart to chapterStart + items.size).also { chapterStart += items.size }
+        })
         viewBinding.verseList.setItems(renderedItems)
         viewBinding.verseList.fadeIn()
         viewBinding.loadingSpinner.fadeOut()
