@@ -108,6 +108,15 @@ class CoreScenariosTest {
     }
 
     @Test
+    fun swipeAfterScrollingToTheBookEndGoesToTheNextBook() = runTest {
+        CoreReader(InMemoryReading()).toBook(42).toChapter(18).scrollToBookEnd().expectVerseIndex(VerseIndex(42, 20, 0))
+            .swipe().expectVerseIndex(VerseIndex(43, 0, 0))
+            .swipe(-1).expectVerseIndex(VerseIndex(42, 20, 0))
+            .toChapter(18).scrollChapters(5).expectVerseIndex(VerseIndex(42, 20, 0))
+            .scrollChapters(-30).expectVerseIndex(VerseIndex(42, 0, 0))
+    }
+
+    @Test
     fun translationFilterDownloadAndRemoveChain() = runTest {
         val storage = InMemoryTranslations()
         val web = TranslationInfo("WEBU", "World English Bible", "English", 100L, false)

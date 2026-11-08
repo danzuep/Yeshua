@@ -16,6 +16,7 @@
 
 package com.github.danzuep.yeshua.android.testing
 
+import com.github.danzuep.yeshua.android.core.Bible
 import com.github.danzuep.yeshua.android.core.Bookmark
 import com.github.danzuep.yeshua.android.core.Highlight
 import com.github.danzuep.yeshua.android.core.Note
@@ -27,6 +28,9 @@ import com.github.danzuep.yeshua.android.core.repository.SettingsRepository
 import com.github.danzuep.yeshua.android.core.repository.VerseAnnotationRepository
 import com.github.danzuep.yeshua.android.core.repository.local.LocalReadingStorage
 import com.github.danzuep.yeshua.android.core.repository.local.LocalTranslationStorage
+import com.github.danzuep.yeshua.android.reading.verse.toBookIndex
+import com.github.danzuep.yeshua.android.reading.verse.toChapterIndex
+import com.github.danzuep.yeshua.android.reading.verse.toPagePosition
 
 /**
  * Fluent steps over the core repositories, mirroring the app UI builders so a scenario can run on the JVM
@@ -124,6 +128,22 @@ class CoreReader(private val storage: LocalReadingStorage, private var position:
     suspend fun toChapter(chapterIndex: Int): CoreReader = moveTo(position.copy(chapterIndex = chapterIndex, verseIndex = 0))
 
     suspend fun toVerse(verseIndex: Int): CoreReader = moveTo(position.copy(verseIndex = verseIndex))
+
+    /** Scrolls to the last chapter of the current book, as the reader does when a page is scrolled to the end of the book. */
+    suspend fun scrollToBookEnd(): CoreReader =
+        moveTo(VerseIndex(position.bookIndex, Bible.getChapterCount(position.bookIndex) - 1, 0))
+
+    /** Scrolls [chapters] chapters forward (or back if negative) within the current book, stopping at its first or last chapter. */
+    suspend fun scrollChapters(chapters: Int): CoreReader {
+        val last = Bible.getChapterCount(position.bookIndex) - 1
+        return moveTo(VerseIndex(position.bookIndex, (position.chapterIndex + chapters).coerceIn(0, last), 0))
+    }
+
+    /** Swipes to the next (positive) or previous (negative) chapter of the chapter being read, crossing book boundaries. */
+    suspend fun swipe(chapters: Int = 1): CoreReader {
+        val target = (position.toPagePosition() + chapters).coerceIn(0, Bible.TOTAL_CHAPTER_COUNT - 1)
+        return moveTo(VerseIndex(target.toBookIndex(), target.toChapterIndex(), 0))
+    }
 
     suspend fun expectVerseIndex(expected: VerseIndex): CoreReader {
         check(storage.readCurrentVerseIndex() == expected) { "expected $expected but was ${storage.readCurrentVerseIndex()}" }
