@@ -19,6 +19,7 @@ package com.github.danzuep.yeshua.android.ui.recyclerview
 
 import android.content.Context
 import android.util.AttributeSet
+import android.util.SparseIntArray
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.ItemTouchHelper
@@ -107,6 +108,8 @@ class CommonRecyclerView : RecyclerView {
     private val adapter: CommonAdapter = CommonAdapter(context).apply { setAdapter(this) }
     private var onItemsReordered: ((List<BaseItem>) -> Unit)? = null
     private var itemsMoved = false
+    private var scrollbarRange: Pair<Int, Int>? = null
+    private val itemHeights = SparseIntArray()
 
     private val itemTouchHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP or ItemTouchHelper.DOWN, 0) {
         override fun getMovementFlags(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder): Int =
@@ -149,8 +152,61 @@ class CommonRecyclerView : RecyclerView {
     }
 
     fun setSettings(settings: Settings) {
+        itemHeights.clear()
         adapter.setSettings(settings)
     }
+
+    /**
+     * Limits the vertical scroll bar to the items in [start, endExclusive), so it spans only that section of the list
+     * however many neighbouring items are loaded around it. A null range restores the default behaviour.
+     */
+    fun setScrollbarItemRange(range: Pair<Int, Int>?) {
+        if (range == null) itemHeights.clear()
+        scrollbarRange = range
+        invalidate()
+    }
+
+    private class Scroll(val range: Int, val offset: Int, val extent: Int)
+
+    private fun rangeScroll(): Scroll? {
+        val (start, end) = scrollbarRange ?: return null
+        val count = end - start
+        val manager = layoutManager as? LinearLayoutManager ?: return null
+        if (count <= 0 || childCount == 0) return null
+        for (i in 0 until childCount) {
+            val child = getChildAt(i)
+            val position = getChildAdapterPosition(child)
+            if (position in start until end) itemHeights.put(position - start, manager.getDecoratedMeasuredHeight(child))
+        }
+        if (itemHeights.size() == 0) return null
+        var known = 0L
+        for (i in 0 until itemHeights.size()) known += itemHeights.valueAt(i)
+        val average = (known / itemHeights.size()).toInt()
+        fun heightOf(index: Int) = itemHeights.get(index, average)
+
+        var total = 0
+        for (index in 0 until count) total += heightOf(index)
+        val extent = minOf(height, total)
+        val first = getChildAt(0)
+        val firstPosition = getChildAdapterPosition(first)
+        var offset = when {
+            firstPosition < start -> 0
+            firstPosition >= end -> total
+            else -> {
+                var above = 0
+                for (index in 0 until firstPosition - start) above += heightOf(index)
+                above - manager.getDecoratedTop(first)
+            }
+        }
+        offset = offset.coerceIn(0, maxOf(0, total - extent))
+        return Scroll(total, offset, extent)
+    }
+
+    override fun computeVerticalScrollRange(): Int = rangeScroll()?.range ?: super.computeVerticalScrollRange()
+
+    override fun computeVerticalScrollOffset(): Int = rangeScroll()?.offset ?: super.computeVerticalScrollOffset()
+
+    override fun computeVerticalScrollExtent(): Int = rangeScroll()?.extent ?: super.computeVerticalScrollExtent()
 
     fun setItems(items: List<BaseItem>) {
         adapter.setItems(items)
