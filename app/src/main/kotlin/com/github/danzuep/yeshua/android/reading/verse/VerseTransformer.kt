@@ -98,9 +98,19 @@ fun List<Verse>.toParagraphItems(
     return items
 }
 
-/** Text for the clipboard: Markdown quotes, with the full translation name in brackets after each reference. */
-fun Collection<Verse>.toStringForCopy(bookName: String, translationName: String): String =
-        map { it.toDisplayedVerse() }.toStringForSharing(bookName, markdown = true, translationName = translationName)
+/**
+ * Text for the clipboard: Markdown quotes, with the translation abbreviation after each reference and a final newline.
+ * Parallel translations follow as blocks of their own, each with the same kind of reference.
+ */
+fun Collection<Verse>.toStringForCopy(bookName: String): String {
+    if (isEmpty()) return ""
+    val displayed = map { it.toDisplayedVerse() }
+    val translations = displayed.first().let { listOf(it.text) + it.parallel }
+    return translations.indices.joinToString("\n") { index ->
+        displayed.mapNotNull { verse -> (listOf(verse.text) + verse.parallel).getOrNull(index)?.let { Verse(verse.verseIndex, it, emptyList()) } }
+                .toStringForSharing(bookName, markdown = true, translationName = translations[index].translationShortName)
+    } + "\n"
+}
 
 fun Collection<Verse>.toStringForSharing(bookName: String, markdown: Boolean = false, translationName: String? = null): String {
     val sortedVerses = sortedBy { verse ->
@@ -163,7 +173,7 @@ fun Collection<Verse>.toStringForSharing(bookName: String, markdown: Boolean = f
             if (currentVerseGroup.first < currentVerseGroup.second) {
                 stringBuilder.append('-').append((currentVerseGroup.second + 1).localized())
             }
-            if (markdown) translationName?.let { stringBuilder.append(" (").append(it).append(')') }
+            if (markdown) translationName?.let { stringBuilder.append(' ').append(it) }
             stringBuilder.append('\n')
             bodyStart = stringBuilder.length
 
@@ -256,7 +266,7 @@ private fun List<Verse>.toStringAcrossChapters(bookName: String, markdown: Boole
                     "${first().parallel[parallelIndex].translationShortName}: " + body { it.parallel[parallelIndex].text }
                 }
     }
-    val title = "$bookName $header" + if (markdown) translationName?.let { " ($it)" }.orEmpty() else ""
+    val title = "$bookName $header" + if (markdown) translationName?.let { " $it" }.orEmpty() else ""
     return title + "\n" + lines.joinToString("\n").let { if (markdown) it.quoted() else it }
 }
 
@@ -267,12 +277,12 @@ private fun StringBuilder.append(verse: Verse, bookName: String, markdown: Boole
 
     if (markdown) {
         // format:
-        // <book name> <chapter index>:<verse index> (<translation name>)
+        // <book name> <chapter index>:<verse index> <translation abbreviation>
         // > <verse text>
         // or, with parallel translations, one "> <translation>: <verse text>" line per translation
         append(bookName).append(' ')
                 .append((verse.verseIndex.chapterIndex + 1).localized()).append(':').append((verse.verseIndex.verseIndex + 1).localized())
-        translationName?.let { append(" (").append(it).append(')') }
+        translationName?.let { append(' ').append(it) }
         append('\n')
         val body = if (verse.parallel.isEmpty()) verse.text.text else {
             (listOf(verse.text) + verse.parallel).joinToString("\n") { "${it.translationShortName}: ${it.text}" }
@@ -300,5 +310,4 @@ private fun StringBuilder.append(verse: Verse, bookName: String, markdown: Boole
 
 fun Verse.toStringForSharing(bookName: String): String = StringBuilder().append(this, bookName, false, null).toString()
 
-fun Verse.toStringForCopy(bookName: String, translationName: String): String =
-        StringBuilder().append(toDisplayedVerse(), bookName, true, translationName).toString()
+fun Verse.toStringForCopy(bookName: String): String = listOf(this).toStringForCopy(bookName)

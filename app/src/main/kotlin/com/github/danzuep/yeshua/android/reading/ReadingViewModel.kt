@@ -250,8 +250,15 @@ class ReadingViewModel @Inject constructor(
         }
     }
 
-    suspend fun bookName(translationShortName: String, bookIndex: Int): String {
-        return bibleReadingManager.readBookNames(translationShortName)[bookIndex]
+    suspend fun bookShortName(translationShortName: String, bookIndex: Int): String {
+        return bibleReadingManager.readBookShortNames(translationShortName)[bookIndex]
+    }
+
+    /** The verses from [start] to [endVerse] of its chapter, as shown when reading. */
+    suspend fun versesInRange(start: VerseIndex, endVerse: Int): List<Verse> {
+        val translation = bibleReadingManager.currentTranslation().firstNotEmpty()
+        return bibleReadingManager.readStructuredVerses(translation, start.bookIndex, start.chapterIndex)
+            .filter { it.verseIndex.verseIndex in start.verseIndex..endVerse && it.text.text.isNotEmpty() }
     }
 
     fun loadVerses(bookIndex: Int, chapterIndex: Int) {
@@ -366,7 +373,7 @@ class ReadingViewModel @Inject constructor(
             verseIndex = verseIndex,
             followingEmptyVerseCount = followingEmptyVerseCount,
             verseText = verse.text,
-            bookName = bibleReadingManager.readBookNames(verse.text.translationShortName)[verse.verseIndex.bookIndex],
+            bookName = bibleReadingManager.readBookShortNames(verse.text.translationShortName)[verse.verseIndex.bookIndex],
             isReorderable = isReorderable
         ))
         parallelTranslations.forEachIndexed { index, translation ->
@@ -374,7 +381,7 @@ class ReadingViewModel @Inject constructor(
                 verseIndex = verseIndex,
                 followingEmptyVerseCount = followingEmptyVerseCount,
                 verseText = Verse.Text(translation, parallel[index].toString()),
-                bookName = bibleReadingManager.readBookNames(translation)[verse.verseIndex.bookIndex],
+                bookName = bibleReadingManager.readBookShortNames(translation)[verse.verseIndex.bookIndex],
                 isReorderable = index < selectedParallelTranslations.size && isReorderable
             ))
         }
