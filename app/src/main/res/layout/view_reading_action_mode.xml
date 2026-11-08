@@ -14,17 +14,17 @@
         android:src="@drawable/ic_highlight" />
 
     <ImageButton
-        android:id="@+id/action_share"
-        style="@style/ReadingActionModeButton"
-        android:contentDescription="@string/action_share"
-        android:src="@drawable/ic_share" />
-
-    <ImageButton
         android:id="@+id/action_bookmark_verse"
         style="@style/ReadingActionModeButton"
         android:contentDescription="@string/action_bookmark_verse"
         android:src="@drawable/ic_bookmark"
         app:tint="?attr/colorControlNormal" />
+
+    <ImageButton
+        android:id="@+id/action_share"
+        style="@style/ReadingActionModeButton"
+        android:contentDescription="@string/action_share"
+        android:src="@drawable/ic_share" />
 
     <ImageButton
         android:id="@+id/action_copy"
