@@ -167,7 +167,8 @@ class ReadingActivity : BaseActivity<ActivityReadingBinding, ReadingViewModel.Vi
 
     private lateinit var drawerToggle: ActionBarDrawerToggle
     private lateinit var versePagerAdapter: VersePagerAdapter
-    private var verseReportedByScroll: VerseIndex? = null
+    // Several reports can be in flight before the saved position comes back, so a single value could miss the match.
+    private val versesReportedByScroll = mutableSetOf<VerseIndex>()
     private var userSwipingPager = false
     private val referenceBackStack = ArrayDeque<VerseIndex>()
 
@@ -229,7 +230,8 @@ class ReadingActivity : BaseActivity<ActivityReadingBinding, ReadingViewModel.Vi
             // Neighbour pages report their own scroll position too; only the selected page may update the current verse.
             // The verse may belong to a neighbouring chapter that the page scrolled into.
             if (pagePosition == verseViewPager.currentItem) {
-                verseReportedByScroll = verseIndex
+                versesReportedByScroll.add(verseIndex)
+                if (versesReportedByScroll.size > 8) versesReportedByScroll.remove(versesReportedByScroll.first())
                 toolbarFragment.getFragment<ReadingToolbarFragment>().showReadingChapter(verseIndex, middleVerse)
                 viewModel.updateCurrentVerse(verseIndex)
             }
@@ -355,8 +357,8 @@ class ReadingActivity : BaseActivity<ActivityReadingBinding, ReadingViewModel.Vi
                 parallel = status.parallelTranslations
             )
             // A verse reached by the user scrolling is already on screen; moving the pager would jump it to a chapter heading.
-            val reportedByScroll = status.currentVerseIndex == verseReportedByScroll
-            verseReportedByScroll = null
+            val reportedByScroll = status.currentVerseIndex in versesReportedByScroll
+            if (reportedByScroll) versesReportedByScroll.clear()
             val chapterChanged = previousVerseIndex.bookIndex != status.currentVerseIndex.bookIndex
                 || previousVerseIndex.chapterIndex != status.currentVerseIndex.chapterIndex
             if (!reportedByScroll && (chapterChanged || !versePagerAdapter.containsChapterInCurrentPage(status.currentVerseIndex))) {

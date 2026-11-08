@@ -72,6 +72,9 @@ class ParagraphItem(
         var endsVerse = true
     }
 
+    override val scrollWeight: Int
+        get() = (heading?.length ?: 0) + segments.sumOf { it.text.length }
+
     companion object {
         const val CHAPTER_MARK = '¶'
         const val LEFT_TO_RIGHT_ISOLATE = '\u2066'

@@ -38,6 +38,10 @@ abstract class BaseItem protected constructor(val viewType: Int, viewHolderCreat
     open val isReorderable: Boolean
         get() = false
 
+    /** Relative size of the item, used to estimate the height of items that are not laid out yet. */
+    open val scrollWeight: Int
+        get() = 1
+
     init {
         VIEW_HOLDER_CREATORS[viewType] = viewHolderCreator
     }
@@ -77,6 +81,8 @@ private class CommonAdapter(context: Context) : RecyclerView.Adapter<BaseViewHol
     }
 
     fun currentItems(): List<BaseItem> = items.toList()
+
+    fun scrollWeightAt(position: Int): Int = items.getOrNull(position)?.scrollWeight ?: 1
 
     fun setSettings(settings: Settings) {
         this.settings = settings
@@ -177,7 +183,7 @@ class CommonRecyclerView : RecyclerView {
         val middle = getChildAdapterPosition(middleChild)
         val (start, end) = scrollbarSections.firstOrNull { middle >= it.first && middle < it.second } ?: return null
         val first = getChildAt(0)
-        return SectionScroll.of(start, end, height, itemHeights, getChildAdapterPosition(first), manager.getDecoratedTop(first))
+        return SectionScroll.of(start, end, height, itemHeights, getChildAdapterPosition(first), manager.getDecoratedTop(first), adapter::scrollWeightAt)
     }
 
     override fun computeVerticalScrollRange(): Int = rangeScroll()?.range ?: super.computeVerticalScrollRange()
