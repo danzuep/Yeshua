@@ -16,8 +16,11 @@
 
 package com.github.danzuep.yeshua.android.core
 
-/** A reference found in a note: [text] in `[start, end)` points at [verseIndex], the first verse of a range. */
-data class VerseReference(val start: Int, val end: Int, val verseIndex: VerseIndex)
+/**
+ * A reference found in a note: [text] in `[start, end)` points at [verseIndex], the first verse of a range,
+ * which ends with [endVerse] (a verse index in the same chapter).
+ */
+data class VerseReference(val start: Int, val end: Int, val verseIndex: VerseIndex, val endVerse: Int = verseIndex.verseIndex)
 
 private val ENGLISH_BOOK_NAMES = listOf(
         "Genesis", "Exodus", "Leviticus", "Numbers", "Deuteronomy", "Joshua", "Judges", "Ruth", "1 Samuel", "2 Samuel",
@@ -86,7 +89,8 @@ fun String.findVerseReferences(bookNames: List<String>, defaultBookIndex: Int): 
         val verse = match.groupValues[2].toInt() - 1
         var end = match.range.last + 1
         val chapterIsValid = book in 0 until Bible.BOOK_COUNT && chapter in 0 until Bible.getChapterCount(book)
-        if (chapterIsValid && verse >= 0) references.add(VerseReference(start, end, VerseIndex(book, chapter, verse)))
+        val rangeEnd = match.groupValues[3].takeIf { it.isNotEmpty() }?.toInt()?.minus(1)?.takeIf { it > verse } ?: verse
+        if (chapterIsValid && verse >= 0) references.add(VerseReference(start, end, VerseIndex(book, chapter, verse), rangeEnd))
 
         while (true) {
             val next = CONTINUATION_REGEX.find(substring(end)) ?: break
@@ -94,7 +98,9 @@ fun String.findVerseReferences(bookNames: List<String>, defaultBookIndex: Int): 
             val numberStart = end + number.range.first
             end += next.range.last + 1
             if (chapterIsValid && number.value.toInt() > 0) {
-                references.add(VerseReference(numberStart, end, VerseIndex(book, chapter, number.value.toInt() - 1)))
+                val first = number.value.toInt() - 1
+                val last = next.groups[2]?.value?.toInt()?.minus(1)?.takeIf { it > first } ?: first
+                references.add(VerseReference(numberStart, end, VerseIndex(book, chapter, first), last))
             }
         }
         segmentStart = end

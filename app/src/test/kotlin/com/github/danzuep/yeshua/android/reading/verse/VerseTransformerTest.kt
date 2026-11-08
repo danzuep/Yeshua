@@ -124,32 +124,32 @@ class VerseTransformerTest : BaseUnitTest() {
     fun `test toStringForCopy keeps non-UTF8 characters and adds the translation name`() {
         val text = "${HEADING}Title${HEADING}${PARAGRAPH}\u201CHello\u201D\u2014world\u00A0now\n\u2003Line two"
         assertEquals(
-                "John 1:16 (World English Bible)\n> \u201CHello\u201D\u2014world\u00A0now\n> \u2003Line two",
-                listOf(verse(15, text)).toStringForCopy("John", "World English Bible")
+                "John 1:16 T\n> \u201CHello\u201D\u2014world\u00A0now\n> \u2003Line two\n",
+                listOf(verse(15, text)).toStringForCopy("John")
         )
     }
 
     @Test
     fun `test toStringForCopy as Markdown for a single verse`() {
         assertEquals(
-                "John 1:16 (World English Bible)\n> For God so loved the world",
-                listOf(verse(15, "For God so loved the world")).toStringForCopy("John", "World English Bible")
+                "John 1:16 T\n> For God so loved the world\n",
+                listOf(verse(15, "For God so loved the world")).toStringForCopy("John")
         )
     }
 
     @Test
     fun `test toStringForCopy as Markdown for poetry lines`() {
         assertEquals(
-                "John 1:16 (World English Bible)\n> Line one\n> \u2003Line two",
-                listOf(verse(15, "${PARAGRAPH}\nLine one\n\u2003Line two")).toStringForCopy("John", "World English Bible")
+                "John 1:16 T\n> Line one\n> \u2003Line two\n",
+                listOf(verse(15, "${PARAGRAPH}\nLine one\n\u2003Line two")).toStringForCopy("John")
         )
     }
 
     @Test
     fun `test toStringForCopy as Markdown for consecutive verses`() {
         assertEquals(
-                "John 1:16-17 (World English Bible)\n> 16 A 17 B",
-                listOf(verse(15, "A"), verse(16, "B")).toStringForCopy("John", "World English Bible")
+                "John 1:16-17 T\n> 16 A 17 B\n",
+                listOf(verse(15, "A"), verse(16, "B")).toStringForCopy("John")
         )
     }
 
@@ -157,22 +157,28 @@ class VerseTransformerTest : BaseUnitTest() {
     fun `test toStringForCopy adds the chapter mark only across chapters`() {
         fun isaiah(chapter: Int, verse: Int, text: String) = Verse(VerseIndex(22, chapter - 1, verse - 1), Verse.Text("T", text), emptyList())
         assertEquals(
-                "Isaiah 52:13-53:1 (World English Bible)\n> 13 A 14 B 15 C \u00B653:1 D",
+                "Isaiah 52:13-53:1 T\n> 13 A 14 B 15 C \u00B653:1 D\n",
                 listOf(isaiah(52, 13, "A"), isaiah(52, 14, "B"), isaiah(52, 15, "C"), isaiah(53, 1, "D"))
-                        .toStringForCopy("Isaiah", "World English Bible")
+                        .toStringForCopy("Isaiah")
         )
         assertEquals(
-                "Isaiah 53:1-2 (World English Bible)\n> 1 D 2 E",
-                listOf(isaiah(53, 1, "D"), isaiah(53, 2, "E")).toStringForCopy("Isaiah", "World English Bible")
+                "Isaiah 53:1-2 T\n> 1 D 2 E\n",
+                listOf(isaiah(53, 1, "D"), isaiah(53, 2, "E")).toStringForCopy("Isaiah")
         )
+    }
+
+    @Test
+    fun `test toStringForCopy gives each parallel translation the same kind of reference`() {
+        val verse = Verse(VerseIndex(42, 0, 15), Verse.Text("WEB", "A"), listOf(Verse.Text("KJV", "B")))
+        assertEquals("John 1:16 WEB\n> A\nJohn 1:16 KJV\n> B\n", listOf(verse).toStringForCopy("John"))
     }
 
     @Test
     fun `test toStringForCopy isolates the chapter and reference in right to left text`() {
         fun matthew(chapter: Int, verse: Int, text: String) = Verse(VerseIndex(39, chapter - 1, verse - 1), Verse.Text("T", text), emptyList())
         assertEquals(
-                "Matthew \u20661:25-2:1\u2069 (Arabic)\n> 25 \u0628\u0635\u062D \u00B6\u20662:1\u2069 \u0628\u0639\u062F",
-                listOf(matthew(1, 25, "\u0628\u0635\u062D"), matthew(2, 1, "\u0628\u0639\u062F")).toStringForCopy("Matthew", "Arabic")
+                "Matthew \u20661:25-2:1\u2069 T\n> 25 \u0628\u0635\u062D \u00B6\u20662:1\u2069 \u0628\u0639\u062F\n",
+                listOf(matthew(1, 25, "\u0628\u0635\u062D"), matthew(2, 1, "\u0628\u0639\u062F")).toStringForCopy("Matthew")
         )
     }
 

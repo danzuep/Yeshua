@@ -58,7 +58,7 @@ class VerseDetailPagerAdapter(context: Context) : RecyclerView.Adapter<VerseDeta
 
     private var updateNote: ((VerseIndex, String) -> Unit)? = null
     private var reorderTranslations: ((List<String>) -> Unit)? = null
-    private var openVerse: ((VerseIndex) -> Unit)? = null
+    private var openVerse: ((VerseIndex, Int) -> Unit)? = null
     private var pendingNote: Pair<VerseIndex, String>? = null
     private val saveNoteRunnable = Runnable { flushNote() }
 
@@ -77,7 +77,7 @@ class VerseDetailPagerAdapter(context: Context) : RecyclerView.Adapter<VerseDeta
     fun initialize(
             updateNote: (VerseIndex, String) -> Unit,
             reorderTranslations: (List<String>) -> Unit,
-            openVerse: (VerseIndex) -> Unit = {}
+            openVerse: (VerseIndex, Int) -> Unit = { _, _ -> }
     ) {
         this.updateNote = updateNote
         this.openVerse = openVerse
@@ -98,7 +98,7 @@ class VerseDetailPagerAdapter(context: Context) : RecyclerView.Adapter<VerseDeta
             when (viewType) {
                 PAGE_VERSES -> VersesPage(inflater, parent, reorderTranslations!!)
                 PAGE_NOTE -> NotePage(inflater, parent, this::scheduleNoteSave)
-                PAGE_PARATEXT -> ParatextPage(inflater, parent) { openVerse?.invoke(it) }
+                PAGE_PARATEXT -> ParatextPage(inflater, parent) { verseIndex, endVerse -> openVerse?.invoke(verseIndex, endVerse) }
                 else -> throw IllegalArgumentException("Unsupported view type: $viewType")
             }
 
@@ -179,7 +179,7 @@ private class VersesPage(inflater: LayoutInflater, container: ViewGroup, reorder
     }
 }
 
-private class ParatextPage(inflater: LayoutInflater, container: ViewGroup, private val openVerse: (VerseIndex) -> Unit)
+private class ParatextPage(inflater: LayoutInflater, container: ViewGroup, private val openVerse: (VerseIndex, Int) -> Unit)
     : VerseDetailPage<PageVerseDetailNotesBinding>(PageVerseDetailNotesBinding.inflate(inflater, container, false)) {
     override fun bind(verseDetail: VerseDetailViewData, settings: Settings) {
         bindSection(viewBinding.footnotesTitle, viewBinding.footnotesScroll, viewBinding.footnotes,
@@ -207,7 +207,7 @@ private class ParatextPage(inflater: LayoutInflater, container: ViewGroup, priva
         return SpannableString(text).apply {
             references.forEach { reference ->
                 setSpan(object : ClickableSpan() {
-                    override fun onClick(widget: View) = openVerse(reference.verseIndex)
+                    override fun onClick(widget: View) = openVerse(reference.verseIndex, reference.endVerse)
 
                     override fun updateDrawState(ds: TextPaint) {
                         super.updateDrawState(ds)

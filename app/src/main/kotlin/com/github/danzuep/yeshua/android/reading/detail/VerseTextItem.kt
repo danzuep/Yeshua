@@ -54,15 +54,15 @@ class VerseTextItem(
         }
 
         // format:
-        // <translation short name>, <book name> <chapter verseIndex>:<verse verseIndex>
+        // <book name> <chapter verseIndex>:<verse verseIndex> <translation short name>
         // <verse text>
         SPANNABLE_STRING_BUILDER.clearAll()
-                .append(verseText.translationShortName).append(", ")
                 .append(bookName).append(' ')
                 .append((verseIndex.chapterIndex + 1).localized()).append(':').append((verseIndex.verseIndex + 1).localized())
         if (followingEmptyVerseCount > 0) {
             SPANNABLE_STRING_BUILDER.append('-').append((verseIndex.verseIndex + followingEmptyVerseCount + 1).localized())
         }
+        SPANNABLE_STRING_BUILDER.append(' ').append(verseText.translationShortName)
         return@lazy SPANNABLE_STRING_BUILDER.setSpans(BOOK_NAME_SPANS)
                 .append('\n').append(verseText.text)
                 .toCharSequence()

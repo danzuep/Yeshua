@@ -33,7 +33,7 @@
 2. Download a translation (e.g., KJV) - requires internet
 3. Once downloaded, you can read offline
 4. Try searching for "love" to see search functionality
-5. Bookmark a verse by long-pressing
+5. Bookmark a verse by tapping it
 
 ## Development
 - Unit tests: `./gradlew test`
