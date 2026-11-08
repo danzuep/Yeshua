@@ -9,6 +9,10 @@
 
         <item name="windowActionModeOverlay">true</item>
 
+        <!-- No system scrim behind the status and navigation bars. -->
+        <item name="android:enforceStatusBarContrast">false</item>
+        <item name="android:enforceNavigationBarContrast">false</item>
+
         <item name="android:windowAnimationStyle">@style/AppWindowAnimationStyle</item>
     </style>
 </resources>

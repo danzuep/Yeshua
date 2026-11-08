@@ -199,82 +199,32 @@ class VerseTransformerTest : BaseUnitTest() {
     }
 
 
+    private val book = MockContents.kjvBookNames[0]
+    private val kjv = MockContents.kjvShortName.uppercase()
+    private val cuv = MockContents.cuvShortName.uppercase()
+    private fun kjvText(i: Int) = MockContents.kjvVerses[i].text.text
+    private fun cuvText(i: Int) = MockContents.cuvVerses[i].text.text
+
     @Test
-    fun testVerseToStringForSharing() {
+    fun testVersesToStringForCopy() {
+        assertEquals("$book 1:1 $kjv\n> ${kjvText(0)}\n\n", MockContents.kjvVerses[0].toStringForCopy(book))
+        // random order is sorted, and runs of consecutive verses are grouped
         assertEquals(
-                "${MockContents.kjvBookNames[0]} 1:1 ${MockContents.kjvVerses[0].text.text}",
-                MockContents.kjvVerses[0].toStringForSharing(MockContents.kjvBookNames[0])
+                "$book 1:1-2 $kjv\n> 1 ${kjvText(0)} 2 ${kjvText(1)}\n\n$book 1:10 $kjv\n> ${kjvText(9)}\n\n",
+                listOf(MockContents.kjvVerses[9], MockContents.kjvVerses[0], MockContents.kjvVerses[1]).toStringForCopy(book)
         )
     }
 
     @Test
-    fun testVerseWithParallelTranslationsToStringForSharing() {
+    fun testVersesWithParallelTranslationsToStringForCopy() {
+        val parallel = MockContents.kjvVersesWithCuvParallel
         assertEquals(
-                "${MockContents.kjvBookNames[0]} 1:1\n" +
-                        "${MockContents.kjvShortName}: ${MockContents.kjvVerses[0].text.text}\n" +
-                        "${MockContents.cuvShortName}: ${MockContents.cuvVerses[0].text.text}",
-                MockContents.kjvVersesWithCuvParallel[0].toStringForSharing(MockContents.kjvBookNames[0])
+                "$book 1:1 $kjv\n> ${kjvText(0)}\n$book 1:1 $cuv\n> ${cuvText(0)}\n\n",
+                parallel[0].toStringForCopy(book)
         )
-    }
-
-    @Test
-    fun testVersesToStringForSharing() {
-        // single verse
         assertEquals(
-                "${MockContents.kjvBookNames[0]} 1:1 ${MockContents.kjvVerses[0].text.text}",
-                listOf(MockContents.kjvVerses[0]).toStringForSharing(MockContents.kjvBookNames[0])
-        )
-
-        // multiple verses
-        assertEquals(
-                "${MockContents.kjvBookNames[0]} 1:1-2\n" +
-                        "1 ${MockContents.kjvVerses[0].text.text} 2 ${MockContents.kjvVerses[1].text.text}\n\n" +
-                        "${MockContents.kjvBookNames[0]} 1:10\n" +
-                        MockContents.kjvVerses[9].text.text,
-                listOf(MockContents.kjvVerses[0], MockContents.kjvVerses[1], MockContents.kjvVerses[9])
-                        .toStringForSharing(MockContents.kjvBookNames[0])
-        )
-    }
-
-    @Test
-    fun testVersesWithParallelTranslationsToStringForSharing() {
-        // single verse
-        assertEquals(
-                "${MockContents.kjvBookNames[0]} 1:1\n" +
-                        "${MockContents.kjvShortName}: ${MockContents.kjvVerses[0].text.text}\n" +
-                        "${MockContents.cuvShortName}: ${MockContents.cuvVerses[0].text.text}",
-                listOf(MockContents.kjvVersesWithCuvParallel[0]).toStringForSharing(MockContents.kjvBookNames[0])
-        )
-
-        // multiple verses
-        assertEquals(
-                "${MockContents.kjvBookNames[0]} 1:1-2\n" +
-                        "${MockContents.kjvShortName}: 1 ${MockContents.kjvVerses[0].text.text} 2 ${MockContents.kjvVerses[1].text.text}\n" +
-                        "${MockContents.cuvShortName}: 1 ${MockContents.cuvVerses[0].text.text} 2 ${MockContents.cuvVerses[1].text.text}",
-                listOf(MockContents.kjvVersesWithCuvParallel[0], MockContents.kjvVersesWithCuvParallel[1])
-                        .toStringForSharing(MockContents.kjvBookNames[0])
-        )
-    }
-
-    @Test
-    fun testVersesWithRandomOrderToStringForSharing() {
-        // without parallel
-        assertEquals(
-                "${MockContents.kjvBookNames[0]} 1:1-2\n" +
-                        "1 ${MockContents.kjvVerses[0].text.text} 2 ${MockContents.kjvVerses[1].text.text}\n\n" +
-                        "${MockContents.kjvBookNames[0]} 1:10\n" +
-                        MockContents.kjvVerses[9].text.text,
-                listOf(MockContents.kjvVerses[0], MockContents.kjvVerses[9], MockContents.kjvVerses[1])
-                        .toStringForSharing(MockContents.kjvBookNames[0])
-        )
-
-        // with parallel
-        assertEquals(
-                "${MockContents.kjvBookNames[0]} 1:1-2\n" +
-                        "${MockContents.kjvShortName}: 1 ${MockContents.kjvVerses[0].text.text} 2 ${MockContents.kjvVerses[1].text.text}\n" +
-                        "${MockContents.cuvShortName}: 1 ${MockContents.cuvVerses[0].text.text} 2 ${MockContents.cuvVerses[1].text.text}",
-                listOf(MockContents.kjvVersesWithCuvParallel[1], MockContents.kjvVersesWithCuvParallel[0])
-                        .toStringForSharing(MockContents.kjvBookNames[0])
+                "$book 1:1-2 $kjv\n> 1 ${kjvText(0)} 2 ${kjvText(1)}\n$book 1:1-2 $cuv\n> 1 ${cuvText(0)} 2 ${cuvText(1)}\n\n",
+                listOf(parallel[1], parallel[0]).toStringForCopy(book)
         )
     }
 }
