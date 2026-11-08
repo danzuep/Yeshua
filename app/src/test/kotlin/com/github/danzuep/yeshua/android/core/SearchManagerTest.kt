@@ -294,6 +294,15 @@ class SearchManagerTest : BaseUnitTest() {
     }
 
     @Test
+    fun `test parseReference() finds Philippians 4-13 when the translation names are only a prefix`() {
+        val names = MockContents.kjvBookNames.mapIndexed { i, n -> if (i == 49) "Philippians" else n }
+        val shortNames = MockContents.kjvBookShortNames.mapIndexed { i, n -> if (i == 49) "Philippians" else n }
+        listOf("philippians 4 13", "phil 4.13", "Phil4.13", "Php4:13").forEach { query ->
+            assertEquals(BibleReference(49, 3, 12..12), parseReference(query, names, shortNames), query)
+        }
+    }
+
+    @Test
     fun `test parseReference()`() {
         val bookNames = MockContents.kjvBookNames
         val bookShortNames = MockContents.kjvBookShortNames
@@ -318,7 +327,7 @@ class SearchManagerTest : BaseUnitTest() {
         assertNull(parse("John 1:0"))
         assertNull(parse("John 1:5-3"))
         assertNull(parse("Unknown 1"))
-        assertNull(parse("Joh 1"))
+        assertEquals(BibleReference(42, 0), parse("Joh 1"))
         assertNull(parse("John 1 2 3"))
         assertEquals(BibleReference(42, 0, 1..1), parse("John 1 2"))
 
