@@ -17,6 +17,7 @@
 
 package com.github.danzuep.yeshua.android.reading
 
+import android.app.SearchManager
 import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
@@ -47,6 +48,7 @@ import com.github.danzuep.yeshua.android.core.VerseIndex
 import com.github.danzuep.yeshua.android.databinding.ActivityReadingBinding
 import com.github.danzuep.yeshua.android.infra.BaseActivity
 import com.github.danzuep.yeshua.android.reading.chapter.ChapterSelectionFragment
+import com.github.danzuep.yeshua.android.search.SearchActivity
 import com.github.danzuep.yeshua.android.reading.detail.VerseDetailViewLayout
 import com.github.danzuep.yeshua.android.reading.detail.VerseTextItem
 import com.github.danzuep.yeshua.android.reading.toolbar.ReadingToolbarFragment
@@ -179,6 +181,20 @@ class ReadingActivity : BaseActivity<ActivityReadingBinding, ReadingViewModel.Vi
         setIntent(intent)
         val openBook = intent.getIntExtra(KEY_OPEN_BOOK, -1)
         if (openBook in 0 until Bible.BOOK_COUNT) viewModel.openBook(openBook)
+        openDeepLink(intent)
+    }
+
+    /** Opens `bible://yeshua/[<version>/]<reference>`, falling back to a search if it is not a reference. */
+    private fun openDeepLink(intent: Intent) {
+        val segments = intent.data?.takeIf { it.scheme == "bible" && it.host == "yeshua" }?.pathSegments ?: return
+        val reference = segments.lastOrNull()?.trim()?.takeIf { it.isNotEmpty() } ?: return
+        val version = segments.getOrNull(segments.size - 2)
+        lifecycleScope.launch {
+            if (!viewModel.openReference(reference, version)) {
+                startActivity(Intent(Intent.ACTION_SEARCH).setClass(this@ReadingActivity, SearchActivity::class.java)
+                    .putExtra(SearchManager.QUERY, reference))
+            }
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -186,6 +202,7 @@ class ReadingActivity : BaseActivity<ActivityReadingBinding, ReadingViewModel.Vi
 
         val openBook = intent.getIntExtra(KEY_OPEN_BOOK, -1)
         if (savedInstanceState == null && openBook in 0 until Bible.BOOK_COUNT) viewModel.openBook(openBook)
+        if (savedInstanceState == null) openDeepLink(intent)
 
         // Handle back navigation using OnBackPressedDispatcher
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {

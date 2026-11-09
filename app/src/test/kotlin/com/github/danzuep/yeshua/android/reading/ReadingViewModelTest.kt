@@ -225,6 +225,34 @@ class ReadingViewModelTest : BaseUnitTest() {
     }
 
     @Test
+    fun `test openReference`() = runTest {
+        every { bibleReadingManager.currentTranslation() } returns flowOf(MockContents.kjvShortName)
+        every { bibleReadingManager.currentVerseIndex() } returns flowOf(VerseIndex(0, 0, 0))
+        coEvery { bibleReadingManager.readBookNames(MockContents.kjvShortName) } returns MockContents.kjvBookNames
+        coEvery { bibleReadingManager.readBookShortNames(MockContents.kjvShortName) } returns MockContents.kjvBookShortNames
+        coEvery { bibleReadingManager.saveCurrentVerseIndex(any()) } returns Unit
+
+        assertTrue(readingViewModel.openReference("Phil4.13"))
+        coVerify { bibleReadingManager.saveCurrentVerseIndex(VerseIndex(49, 3, 12)) }
+        assertFalse(readingViewModel.openReference("not a reference"))
+    }
+
+    @Test
+    fun `test openReference with a downloaded version`() = runTest {
+        every { bibleReadingManager.currentTranslation() } returns flowOf(MockContents.kjvShortName)
+        every { bibleReadingManager.currentVerseIndex() } returns flowOf(VerseIndex(0, 0, 0))
+        every { translationManager.downloadedTranslations() } returns flowOf(listOf(MockContents.kjvDownloadedTranslationInfo))
+        coEvery { bibleReadingManager.readBookNames(MockContents.kjvShortName) } returns MockContents.kjvBookNames
+        coEvery { bibleReadingManager.readBookShortNames(MockContents.kjvShortName) } returns MockContents.kjvBookShortNames
+        coEvery { bibleReadingManager.saveCurrentTranslation(any()) } returns Unit
+        coEvery { bibleReadingManager.saveCurrentVerseIndex(any()) } returns Unit
+
+        assertTrue(readingViewModel.openReference("Php4:13", "kjv"))
+        coVerify { bibleReadingManager.saveCurrentTranslation(MockContents.kjvShortName) }
+        coVerify { bibleReadingManager.saveCurrentVerseIndex(VerseIndex(49, 3, 12)) }
+    }
+
+    @Test
     fun `test selectVerse`() = runTest {
         coEvery { bibleReadingManager.saveCurrentVerseIndex(VerseIndex(1, 2, 3)) } returns Unit
         val actions = collectViewActions()
