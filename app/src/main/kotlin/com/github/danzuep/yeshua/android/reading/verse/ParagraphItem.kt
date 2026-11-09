@@ -127,8 +127,9 @@ class ParagraphItem(
         }
     }
 
-    /** With [rubyOn], readings are drawn above their base text; otherwise only the base text is shown. */
-    fun textForDisplay(rubyOn: Boolean = true): CharSequence {
+    /** With [rubyOn], readings are drawn above their base text; otherwise only the base text is shown.
+     * [themedContext] should be the view's, because the application context ignores the in-app night mode. */
+    fun textForDisplay(rubyOn: Boolean = true, themedContext: Context = context): CharSequence {
         val builder = SpannableStringBuilder()
         val newRanges = ArrayList<Range>(segments.size)
 
@@ -138,7 +139,7 @@ class ParagraphItem(
             builder.setSpan(RelativeSizeSpan(1.1F), 0, it.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
         }
 
-        val selectedColor = ContextCompat.getColor(context, R.color.verse_selected)
+        val selectedColor = ContextCompat.getColor(themedContext, R.color.verse_selected)
         segments.forEachIndexed { index, segment ->
             if (index > 0 && !segment.text.startsWith('\n')) builder.append(' ')
 
@@ -308,7 +309,7 @@ private class ParagraphViewHolder(inflater: LayoutInflater, parent: ViewGroup)
 
     override fun bind(settings: Settings, item: ParagraphItem, payloads: List<Any>) {
         payloads.forEach { payload -> item.update(payload as VerseUpdate) }
-        viewBinding.text.text = item.textForDisplay(settings.rubyOn)
+        viewBinding.text.text = item.textForDisplay(settings.rubyOn, itemView.context)
         viewBinding.text.setPrimaryTextSize(settings)
     }
 }

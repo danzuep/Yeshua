@@ -119,7 +119,8 @@ class SearchActivity : BaseActivity<ActivitySearchBinding, SearchViewModel.ViewA
     }
 
     override fun onViewActionEmitted(viewAction: SearchViewModel.ViewAction) = when (viewAction) {
-        SearchViewModel.ViewAction.OpenReadingScreen -> navigator.navigate(this, Navigator.SCREEN_READING)
+        SearchViewModel.ViewAction.OpenReadingScreen -> navigator.navigate(
+            this, Navigator.SCREEN_READING, bundleOf(ReadingActivity.KEY_SELECT_VERSE to true))
         is SearchViewModel.ViewAction.OpenBook -> navigator.navigate(
             this, Navigator.SCREEN_READING, bundleOf(ReadingActivity.KEY_OPEN_BOOK to viewAction.bookIndex))
     }

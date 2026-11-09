@@ -75,6 +75,7 @@ class ReadingActivity : BaseActivity<ActivityReadingBinding, ReadingViewModel.Vi
         private const val KEY_OPEN_NOTE = "com.github.danzuep.yeshua.android.KEY_OPEN_NOTE"
 
         /** Optional launch extra: the 0-based index of the book to open (e.g. 42 for John) instead of the last reading position. */
+        const val KEY_SELECT_VERSE = "com.github.danzuep.yeshua.android.KEY_SELECT_VERSE"
         const val KEY_OPEN_BOOK = "com.github.danzuep.yeshua.android.KEY_OPEN_BOOK"
 
         fun bundleForOpenNote(): Bundle = Bundle().apply { putBoolean(KEY_OPEN_NOTE, true) }
@@ -182,6 +183,21 @@ class ReadingActivity : BaseActivity<ActivityReadingBinding, ReadingViewModel.Vi
         val openBook = intent.getIntExtra(KEY_OPEN_BOOK, -1)
         if (openBook in 0 until Bible.BOOK_COUNT) viewModel.openBook(openBook)
         openDeepLink(intent)
+        selectOpenedVerse(intent)
+    }
+
+    /** Selects the current verse, as when following a cross reference, if the caller asked for it. */
+    private fun selectOpenedVerse(intent: Intent) {
+        if (!intent.getBooleanExtra(KEY_SELECT_VERSE, false)) return
+        intent.removeExtra(KEY_SELECT_VERSE)
+        lifecycleScope.launch {
+            val verseIndex = viewModel.currentVerseIndex()
+            if (currentReadingStatus?.currentVerseIndex == verseIndex) {
+                selectReferencedVerses(verseIndex, verseIndex.verseIndex)
+            } else {
+                pendingReferenceSelection = verseIndex to verseIndex.verseIndex
+            }
+        }
     }
 
     /** Opens `bible://yeshua/[<version>/]<reference>`, falling back to a search if it is not a reference. */
@@ -203,6 +219,7 @@ class ReadingActivity : BaseActivity<ActivityReadingBinding, ReadingViewModel.Vi
         val openBook = intent.getIntExtra(KEY_OPEN_BOOK, -1)
         if (savedInstanceState == null && openBook in 0 until Bible.BOOK_COUNT) viewModel.openBook(openBook)
         if (savedInstanceState == null) openDeepLink(intent)
+        if (savedInstanceState == null) selectOpenedVerse(intent)
 
         // Handle back navigation using OnBackPressedDispatcher
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
