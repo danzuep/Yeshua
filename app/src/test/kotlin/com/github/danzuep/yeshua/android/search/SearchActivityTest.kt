@@ -123,10 +123,10 @@ class SearchActivityTest : BaseActivityTest() {
     @Test
     fun `test onViewActionEmitted(), OpenReadingScreen`() {
         every { viewModel.viewAction() } returns flowOf(SearchViewModel.ViewAction.OpenReadingScreen)
-        every { MockNavigationModule.mockNavigator.navigate(any(), Navigator.SCREEN_READING) } returns Unit
+        every { MockNavigationModule.mockNavigator.navigate(any(), Navigator.SCREEN_READING, any()) } returns Unit
 
         withActivity<SearchActivity> { activity ->
-            verify(exactly = 1) { MockNavigationModule.mockNavigator.navigate(activity, Navigator.SCREEN_READING) }
+            verify(exactly = 1) { MockNavigationModule.mockNavigator.navigate(activity, Navigator.SCREEN_READING, any()) }
         }
     }
 
