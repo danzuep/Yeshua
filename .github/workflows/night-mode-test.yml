@@ -4,7 +4,7 @@ on:
   pull_request:
     paths:
       - .github/workflows/night-mode-test.yml
-      - .github/scripts/night-mode-test.sh
+      - .github/scripts/theme-test.sh
 
 jobs:
   night:
@@ -33,11 +33,11 @@ jobs:
       with:
         api-level: 34
         arch: x86_64
-        script: bash .github/scripts/night-mode-test.sh
+        script: bash .github/scripts/theme-test.sh
     - uses: actions/upload-artifact@v7
       if: always()
       with:
         name: night-results
         path: |
-          night.png
-          night-light.png
+          theme-night.png
+          theme-light.png

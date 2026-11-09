@@ -19,9 +19,9 @@ open_reading 0 20
 adb shell cmd uimode night yes
 sleep 3
 open_reading 42 8
-adb exec-out screencap -p > night.png
+adb exec-out screencap -p > theme-night.png
 
 adb shell cmd uimode night no
 sleep 3
 open_reading 42 8
-adb exec-out screencap -p > night-light.png
+adb exec-out screencap -p > theme-light.png
