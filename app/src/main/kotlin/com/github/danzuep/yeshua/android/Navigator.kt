@@ -64,7 +64,7 @@ class Navigator {
             SCREEN_HIGHLIGHTS -> Intent(activity, HighlightsActivity::class.java)
             SCREEN_NOTES -> Intent(activity, NotesActivity::class.java)
             SCREEN_SETTINGS -> Intent(activity, SettingsActivity::class.java)
-            SCREEN_RATE_ME -> Intent(Intent.ACTION_VIEW).setData(Uri.parse("market://details?id=com.github.danzuep.yeshua.android"))
+            SCREEN_RATE_ME -> Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://github.com/danzuep/Yeshua"))
             SCREEN_WEBSITE -> Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://ebible.org/about.php"))
             else -> throw IllegalArgumentException("Unknown screen - $screen")
         }
