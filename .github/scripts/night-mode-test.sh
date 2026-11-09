@@ -2,13 +2,14 @@
 # Installs the debug APK, simulates a camera cutout, then screenshots the reading screen in night mode and in light mode.
 set -u
 
-APP_ID="com.github.danzuep.yeshua.android"
+APP_NAMESPACE="com.github.danzuep.yeshua.android"
+APP_ID="$APP_NAMESPACE.debug"
 
 adb install app/build/outputs/apk/debug/app-debug.apk
 adb shell cmd overlay enable com.android.internal.display.cutout.emulation.tall
 
 open_reading() {
-  adb shell am start -W --activity-single-top -n "$APP_ID/$APP_ID.LauncherActivity" --ei "$APP_ID.KEY_OPEN_BOOK" "$1"
+  adb shell am start -W --activity-single-top -n "$APP_ID/$APP_NAMESPACE.LauncherActivity" --ei "$APP_NAMESPACE.KEY_OPEN_BOOK" "$1"
   sleep "$2"
 }
 
