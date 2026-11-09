@@ -92,7 +92,7 @@ internal fun parseUsfm(content: String): ScriptureBook {
             line.isEmpty() -> continue
             line.startsWith("\\id ") -> { code = line.split(WHITESPACE)[1].uppercase(); continue }
             line.startsWith("\\toc2 ") || (line.startsWith("\\h ") && name == null) -> {
-                name = stripUsfmMarkup(line.substringAfter(' ')).ifEmpty { name }
+                name = stripUsfmMarkup(line.substringAfter(' ')).removeRuby().ifEmpty { name }
                 continue
             }
             line.startsWith("\\c ") -> {

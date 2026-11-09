@@ -69,4 +69,10 @@ class RubyTest {
         assertEquals("Text 神は", text.stripStructure())
         assertEquals("Text 神は", text.toDisplayedText())
     }
+
+    @Test
+    fun extractHeadings_removesRuby() {
+        val text = "${HEADING}${ruby("神", "かみ")}の愛${HEADING}Text"
+        assertEquals(listOf("神の愛"), text.extractHeadings())
+    }
 }
