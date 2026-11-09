@@ -21,3 +21,4 @@ Check each translation's license before using it.
 
 The format of the downloaded files is USFM. Strong's numbers and cross references are not supported, as USFM
 translations from these sites do not include them.
+Ruby (`\rb base|reading\rb*`, e.g. furigana or pinyin) is kept and drawn above its base text; turn it off with **Show ruby** in Settings to read just the base text.
