@@ -141,7 +141,10 @@ class ParagraphItem(
 
         val selectedColor = ContextCompat.getColor(themedContext, R.color.verse_selected)
         segments.forEachIndexed { index, segment ->
-            if (index > 0 && !segment.text.startsWith('\n')) builder.append(' ')
+            // Line breaks go before the label, otherwise the label is left at the end of the previous line.
+            val segmentText = segment.text.trimStart('\n')
+            val lineBreaks = segment.text.length - segmentText.length
+            if (lineBreaks > 0) builder.append("\n".repeat(lineBreaks)) else if (index > 0) builder.append(' ')
 
             val verseIndex = segment.verse.verseIndex.verseIndex
             val start = builder.length
@@ -173,7 +176,7 @@ class ParagraphItem(
             }
 
             val textStart = builder.length
-            segment.text.toRubyParts().forEach { part ->
+            segmentText.toRubyParts().forEach { part ->
                 val partStart = builder.length
                 builder.append(part.text)
                 val reading = part.reading
