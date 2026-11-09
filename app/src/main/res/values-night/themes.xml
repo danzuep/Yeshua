@@ -9,8 +9,9 @@
 
         <item name="windowActionModeOverlay">true</item>
 
-        <!-- Black behind the camera cutout and status bar. -->
-        <item name="android:windowBackground">@android:color/black</item>
+        <!-- Same colour as the search button behind the camera cutout and status bar; DrawerLayout paints colorPrimaryDark there. -->
+        <item name="android:windowBackground">@color/search_fab_background</item>
+        <item name="colorPrimaryDark">@color/search_fab_background</item>
 
         <!-- No system scrim behind the status and navigation bars. -->
         <item name="android:enforceStatusBarContrast">false</item>
