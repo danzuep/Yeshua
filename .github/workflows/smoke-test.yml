@@ -39,6 +39,7 @@ jobs:
           screen.png
           screen-bookmarked.png
           screen-chapter.png
+          screen-ruby.png
           ui.xml
           ui-search.xml
 

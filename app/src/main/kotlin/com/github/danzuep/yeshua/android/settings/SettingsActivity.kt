@@ -58,6 +58,7 @@ class SettingsActivity : BaseActivity<ActivitySettingsBinding, SettingsViewModel
         toolbar.setNavigationOnClickListener { navigator.goBack(this@SettingsActivity) }
         keepScreenOn.setOnCheckedChangeByUserListener(viewModel::saveKeepScreenOn)
         hideSearchButton.setOnCheckedChangeByUserListener(viewModel::saveHideSearchButton)
+        ruby.setOnCheckedChangeByUserListener(viewModel::saveRubyOn)
         fontSize.setOnSingleClickListener(viewModel::selectFontSizeScale)
         nightMode.setOnSingleClickListener(viewModel::selectNightMode)
         language.setOnSingleClickListener(::selectLanguage)
@@ -97,6 +98,7 @@ class SettingsActivity : BaseActivity<ActivitySettingsBinding, SettingsViewModel
 
         keepScreenOn.isChecked = viewState.keepScreenOn
         hideSearchButton.isChecked = viewState.hideSearchButton
+        ruby.isChecked = viewState.rubyOn
 
         nightMode.setDescription(viewState.nightModeStringRes)
         language.setDescription(AppLanguage.selectedCode()?.let(AppLanguage::nativeName) ?: getString(R.string.settings_text_language_system))
@@ -119,6 +121,7 @@ class SettingsActivity : BaseActivity<ActivitySettingsBinding, SettingsViewModel
         language.setTextSize(bodyTextSizePx, captionTextSizePx)
         reading.setTextSize(bodyTextSizePx)
         hideSearchButton.setTextSize(TypedValue.COMPLEX_UNIT_PX, bodyTextSizePx.toFloat())
+        ruby.setTextSize(TypedValue.COMPLEX_UNIT_PX, bodyTextSizePx.toFloat())
         defaultHighlightColor.setTextSize(bodyTextSizePx, captionTextSizePx)
         backupRestore.setTextSize(bodyTextSizePx)
         backup.setTextSize(bodyTextSizePx, captionTextSizePx)

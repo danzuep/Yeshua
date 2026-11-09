@@ -66,6 +66,12 @@ if ! grep -q "The light shines in the darkness" ui.xml 2> /dev/null; then
   echo "FAIL: expected flowing paragraph text (John 1:1-5 not in one paragraph)"
   status=1
 fi
+# Capture the ruby added to verse 2: the reading is drawn above its base, while the text stays plain.
+adb exec-out screencap -p > screen-ruby.png
+if ! grep -q "Ruby" ui.xml 2> /dev/null; then
+  echo "FAIL: ruby base text was not shown"
+  status=1
+fi
 # Bookmark the first verse (tap it, then tap Bookmark) and capture the screen: the heart is stacked under the verse number.
 verse_xy=$(python3 - << 'PY'
 import re

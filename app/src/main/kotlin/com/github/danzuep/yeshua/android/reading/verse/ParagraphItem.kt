@@ -44,6 +44,7 @@ import androidx.annotation.DrawableRes
 import androidx.core.content.ContextCompat
 import com.github.danzuep.yeshua.android.R
 import com.github.danzuep.yeshua.android.core.Settings
+import com.github.danzuep.yeshua.android.core.toRubyParts
 import com.github.danzuep.yeshua.android.core.Verse
 import com.github.danzuep.yeshua.android.core.VerseIndex
 import com.github.danzuep.yeshua.android.databinding.ItemParagraphBinding
@@ -126,7 +127,8 @@ class ParagraphItem(
         }
     }
 
-    fun textForDisplay(): CharSequence {
+    /** With [rubyOn], readings are drawn above their base text; otherwise only the base text is shown. */
+    fun textForDisplay(rubyOn: Boolean = true): CharSequence {
         val builder = SpannableStringBuilder()
         val newRanges = ArrayList<Range>(segments.size)
 
@@ -170,7 +172,14 @@ class ParagraphItem(
             }
 
             val textStart = builder.length
-            builder.append(segment.text)
+            segment.text.toRubyParts().forEach { part ->
+                val partStart = builder.length
+                builder.append(part.text)
+                val reading = part.reading
+                if (rubyOn && !reading.isNullOrEmpty() && part.text.isNotEmpty()) {
+                    builder.setSpan(RubySpan(part.text, reading), partStart, builder.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                }
+            }
             highlights[verseIndex]?.let { builder.setSpans(createHighlightSpans(it), textStart, builder.length) }
 
             if (segment.endsVerse) {
@@ -234,6 +243,37 @@ internal class LabelWithIconSpan(private val label: String, private val icon: Dr
     }
 }
 
+/** Draws [reading] in small text centred above [base], making the line taller and the span as wide as the wider of the two. */
+internal class RubySpan(private val base: String, private val reading: String) : ReplacementSpan() {
+    private fun readingPaint(paint: Paint) = Paint(paint).apply {
+        textSize = paint.textSize * READING_SCALE
+        typeface = Typeface.create(paint.typeface, Typeface.NORMAL)
+    }
+
+    override fun getSize(paint: Paint, text: CharSequence?, start: Int, end: Int, fm: Paint.FontMetricsInt?): Int {
+        if (fm != null) {
+            paint.getFontMetricsInt(fm)
+            val extra = readingPaint(paint).fontMetricsInt.let { it.descent - it.ascent }
+            fm.ascent -= extra
+            fm.top -= extra
+        }
+        return maxOf(paint.measureText(base), readingPaint(paint).measureText(reading)).roundToInt()
+    }
+
+    override fun draw(
+            canvas: Canvas, text: CharSequence?, start: Int, end: Int, x: Float, top: Int, y: Int, bottom: Int, paint: Paint
+    ) {
+        val width = getSize(paint, text, start, end, null)
+        val readingPaint = readingPaint(paint)
+        canvas.drawText(base, x + (width - paint.measureText(base)) / 2, y.toFloat(), paint)
+        canvas.drawText(reading, x + (width - readingPaint.measureText(reading)) / 2, y + paint.ascent() - readingPaint.descent(), readingPaint)
+    }
+
+    private companion object {
+        const val READING_SCALE = 0.5F
+    }
+}
+
 @SuppressLint("ClickableViewAccessibility")
 private class ParagraphViewHolder(inflater: LayoutInflater, parent: ViewGroup)
     : BaseViewHolder<ParagraphItem, ItemParagraphBinding>(ItemParagraphBinding.inflate(inflater, parent, false)) {
@@ -268,7 +308,7 @@ private class ParagraphViewHolder(inflater: LayoutInflater, parent: ViewGroup)
 
     override fun bind(settings: Settings, item: ParagraphItem, payloads: List<Any>) {
         payloads.forEach { payload -> item.update(payload as VerseUpdate) }
-        viewBinding.text.text = item.textForDisplay()
+        viewBinding.text.text = item.textForDisplay(settings.rubyOn)
         viewBinding.text.setPrimaryTextSize(settings)
     }
 }
