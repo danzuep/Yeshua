@@ -23,6 +23,7 @@ import com.github.danzuep.yeshua.android.BuildConfig
 import com.github.danzuep.yeshua.android.core.Verse
 import com.github.danzuep.yeshua.android.core.VerseIndex
 import com.github.danzuep.yeshua.android.core.VerseSearchQuery
+import com.github.danzuep.yeshua.android.core.removeRuby
 import com.github.danzuep.yeshua.android.core.repository.local.LocalReadingStorage
 import com.github.danzuep.yeshua.android.core.repository.local.android.db.AndroidDatabase
 import com.github.danzuep.yeshua.android.core.repository.local.android.db.MetadataDao
@@ -71,11 +72,11 @@ class AndroidReadingStorage(private val androidDatabase: AndroidDatabase) : Loca
     }
 
     override suspend fun readBookNames(translationShortName: String): List<String> = withContext(Dispatchers.IO) {
-        androidDatabase.bookNamesDao.read(translationShortName)
+        androidDatabase.bookNamesDao.read(translationShortName).map { it.removeRuby() }
     }
 
     override suspend fun readBookShortNames(translationShortName: String): List<String> = withContext(Dispatchers.IO) {
-        androidDatabase.bookNamesDao.readShortName(translationShortName)
+        androidDatabase.bookNamesDao.readShortName(translationShortName).map { it.removeRuby() }
     }
 
     override suspend fun readBookIndicesWithVerses(translationShortName: String): Set<Int> = withContext(Dispatchers.IO) {

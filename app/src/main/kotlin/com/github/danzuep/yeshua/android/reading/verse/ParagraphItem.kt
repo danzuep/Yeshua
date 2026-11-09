@@ -134,9 +134,10 @@ class ParagraphItem(
         val newRanges = ArrayList<Range>(segments.size)
 
         heading?.let {
-            builder.append(it).append('\n')
-            builder.setSpan(StyleSpan(Typeface.BOLD), 0, it.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-            builder.setSpan(RelativeSizeSpan(1.1F), 0, it.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            builder.appendRuby(it, rubyOn)
+            builder.setSpan(StyleSpan(Typeface.BOLD), 0, builder.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            builder.setSpan(RelativeSizeSpan(1.1F), 0, builder.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            builder.append('\n')
         }
 
         val selectedColor = ContextCompat.getColor(themedContext, R.color.verse_selected)
@@ -176,14 +177,7 @@ class ParagraphItem(
             }
 
             val textStart = builder.length
-            segmentText.toRubyParts().forEach { part ->
-                val partStart = builder.length
-                builder.append(part.text)
-                val reading = part.reading
-                if (rubyOn && !reading.isNullOrEmpty() && part.text.isNotEmpty()) {
-                    builder.setSpan(RubySpan(part.text, reading), partStart, builder.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-                }
-            }
+            builder.appendRuby(segmentText, rubyOn)
             highlights[verseIndex]?.let { builder.setSpans(createHighlightSpans(it), textStart, builder.length) }
 
             if (segment.endsVerse) {
@@ -199,6 +193,17 @@ class ParagraphItem(
 
         ranges = newRanges
         return builder
+    }
+
+    private fun SpannableStringBuilder.appendRuby(text: String, rubyOn: Boolean) {
+        text.toRubyParts().forEach { part ->
+            val partStart = length
+            append(part.text)
+            val reading = part.reading
+            if (rubyOn && !reading.isNullOrEmpty() && part.text.isNotEmpty()) {
+                setSpan(RubySpan(part.text, reading), partStart, length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            }
+        }
     }
 
     private fun SpannableStringBuilder.appendDrawable(

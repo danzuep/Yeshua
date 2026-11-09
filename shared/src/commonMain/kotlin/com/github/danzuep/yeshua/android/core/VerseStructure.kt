@@ -43,7 +43,7 @@ fun String.extractNotes(): List<VerseNote> =
 
 /** The section headings of a verse, in the order they appear. */
 fun String.extractHeadings(): List<String> =
-        HEADING_CONTENT_REGEX.findAll(this).map { it.groupValues[1] }.filter { it.isNotBlank() }.toList()
+        HEADING_CONTENT_REGEX.findAll(this).map { it.groupValues[1].removeRuby() }.filter { it.isNotBlank() }.toList()
 
 /** A part of verse text; [reading] (e.g. furigana or pinyin) is only set where the text is ruby that goes above [text]. */
 class RubyPart(val text: String, val reading: String? = null)
