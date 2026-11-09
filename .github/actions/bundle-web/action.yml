@@ -1,0 +1,11 @@
+name: Bundle minimal WEB
+description: Bundle a minimal World English Bible (John 1-2 and Hebrews 1-2 only) into bundled-assets/
+runs:
+  using: composite
+  steps:
+  - shell: bash
+    run: |
+      mkdir -p bundled-assets/bundled/translations
+      curl -fsSL "https://ebible.org/Scriptures/engwebu_usfm.zip" -o full-engwebu.zip
+      bash .github/scripts/make-minimal-web.sh full-engwebu.zip bundled-assets/bundled/translations/engwebu.zip
+      printf 'engwebu\tWorld English Bible Updated\teng\n' > bundled-assets/bundled/list.tsv

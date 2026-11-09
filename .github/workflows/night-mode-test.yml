@@ -5,6 +5,7 @@ on:
     paths:
       - .github/workflows/night-mode-test.yml
       - .github/scripts/theme-test.sh
+      - .github/actions/bundle-web/action.yml
 
 jobs:
   night:
@@ -17,12 +18,7 @@ jobs:
         distribution: 'temurin'
         java-version: '25'
     - uses: gradle/actions/setup-gradle@v6
-    - name: Bundle a minimal World English Bible (John 1-2 and Hebrews 1-2 only)
-      run: |
-        mkdir -p bundled-assets/bundled/translations
-        curl -fsSL "https://ebible.org/Scriptures/engwebu_usfm.zip" -o full-engwebu.zip
-        bash .github/scripts/make-minimal-web.sh full-engwebu.zip bundled-assets/bundled/translations/engwebu.zip
-        printf 'engwebu\tWorld English Bible Updated\teng\n' > bundled-assets/bundled/list.tsv
+    - uses: ./.github/actions/bundle-web
     - run: ./gradlew assembleDebug -PbundledAssetsDir="$PWD/bundled-assets"
     - name: Enable KVM
       run: |
