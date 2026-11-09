@@ -184,13 +184,13 @@ class ReadingActivity : BaseActivity<ActivityReadingBinding, ReadingViewModel.Vi
         openDeepLink(intent)
     }
 
-    /** Opens `bible://verse/<reference>` or `bible://verse?q=<reference>`, falling back to a search if it is not a reference. */
+    /** Opens `bible://yeshua/[<version>/]<reference>`, falling back to a search if it is not a reference. */
     private fun openDeepLink(intent: Intent) {
-        val reference = intent.data?.takeIf { it.scheme == "bible" && it.host == "verse" }
-            ?.let { it.pathSegments.firstOrNull() ?: it.getQueryParameter("q") }
-            ?.trim()?.takeIf { it.isNotEmpty() } ?: return
+        val segments = intent.data?.takeIf { it.scheme == "bible" && it.host == "yeshua" }?.pathSegments ?: return
+        val reference = segments.lastOrNull()?.trim()?.takeIf { it.isNotEmpty() } ?: return
+        val version = segments.getOrNull(segments.size - 2)
         lifecycleScope.launch {
-            if (!viewModel.openReference(reference)) {
+            if (!viewModel.openReference(reference, version)) {
                 startActivity(Intent(Intent.ACTION_SEARCH).setClass(this@ReadingActivity, SearchActivity::class.java)
                     .putExtra(SearchManager.QUERY, reference))
             }

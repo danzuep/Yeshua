@@ -224,15 +224,23 @@ class ReadingViewModel @Inject constructor(
         }
     }
 
-    /** Opens the verse of a reference such as "Phil4.13". Returns false if [reference] is not one. */
-    suspend fun openReference(reference: String): Boolean {
-        val translation = bibleReadingManager.currentTranslation().firstNotEmpty()
+    /**
+     * Opens the verse of a reference such as "Phil4.13" in the downloaded translation named [version], if any, else the
+     * current one. Returns false if [reference] is not one.
+     */
+    suspend fun openReference(reference: String, version: String? = null): Boolean {
+        val requested = version?.let { v ->
+            translationManager.downloadedTranslations().first().firstOrNull { it.shortName.equals(v, ignoreCase = true) }?.shortName
+        }
+        val translation = requested ?: bibleReadingManager.currentTranslation().firstNotEmpty()
         val parsed = parseReference(
             reference, bibleReadingManager.readBookNames(translation), bibleReadingManager.readBookShortNames(translation)
         ) ?: return false
         val verseIndex = VerseIndex(parsed.bookIndex, parsed.chapterIndex, parsed.verseIndexes?.first ?: 0)
         if (!verseIndex.isValid()) return false
         bibleReadingManager.currentVerseIndex().first()
+        // Switching translation may move the reader to its first book, so it comes before selecting the verse.
+        if (requested != null) bibleReadingManager.saveCurrentTranslation(requested)
         selectVerse(verseIndex)
         return true
     }
