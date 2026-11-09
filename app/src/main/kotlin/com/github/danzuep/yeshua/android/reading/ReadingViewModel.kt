@@ -39,6 +39,7 @@ import com.github.danzuep.yeshua.android.core.Note
 import com.github.danzuep.yeshua.android.core.ReadingProgressManager
 import com.github.danzuep.yeshua.android.core.Settings
 import com.github.danzuep.yeshua.android.core.extractNotes
+import com.github.danzuep.yeshua.android.core.parseReference
 import com.github.danzuep.yeshua.android.core.SettingsManager
 import com.github.danzuep.yeshua.android.core.TranslationManager
 import com.github.danzuep.yeshua.android.core.provider.TimeProvider
@@ -221,6 +222,19 @@ class ReadingViewModel @Inject constructor(
             bibleReadingManager.currentVerseIndex().first()
             selectChapter(bookIndex, 0)
         }
+    }
+
+    /** Opens the verse of a reference such as "Phil4.13". Returns false if [reference] is not one. */
+    suspend fun openReference(reference: String): Boolean {
+        val translation = bibleReadingManager.currentTranslation().firstNotEmpty()
+        val parsed = parseReference(
+            reference, bibleReadingManager.readBookNames(translation), bibleReadingManager.readBookShortNames(translation)
+        ) ?: return false
+        val verseIndex = VerseIndex(parsed.bookIndex, parsed.chapterIndex, parsed.verseIndexes?.first ?: 0)
+        if (!verseIndex.isValid()) return false
+        bibleReadingManager.currentVerseIndex().first()
+        selectVerse(verseIndex)
+        return true
     }
 
     fun selectChapter(bookIndex: Int, chapterIndex: Int) {
