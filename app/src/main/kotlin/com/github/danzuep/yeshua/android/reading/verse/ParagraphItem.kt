@@ -175,8 +175,9 @@ class ParagraphItem(
             segment.text.toRubyParts().forEach { part ->
                 val partStart = builder.length
                 builder.append(part.text)
-                if (rubyOn && !part.reading.isNullOrEmpty() && part.text.isNotEmpty()) {
-                    builder.setSpan(RubySpan(part.text, part.reading), partStart, builder.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                val reading = part.reading
+                if (rubyOn && !reading.isNullOrEmpty() && part.text.isNotEmpty()) {
+                    builder.setSpan(RubySpan(part.text, reading), partStart, builder.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
                 }
             }
             highlights[verseIndex]?.let { builder.setSpans(createHighlightSpans(it), textStart, builder.length) }
