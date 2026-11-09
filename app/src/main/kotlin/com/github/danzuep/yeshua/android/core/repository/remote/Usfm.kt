@@ -19,6 +19,9 @@ package com.github.danzuep.yeshua.android.core.repository.remote
 import com.github.danzuep.yeshua.android.core.HEADING
 import com.github.danzuep.yeshua.android.core.NOTE_MARK
 import com.github.danzuep.yeshua.android.core.PARAGRAPH
+import com.github.danzuep.yeshua.android.core.RUBY_MARK
+import com.github.danzuep.yeshua.android.core.RUBY_SEPARATOR
+import com.github.danzuep.yeshua.android.core.removeRuby
 import java.io.InputStream
 import java.util.TreeMap
 import java.util.zip.ZipInputStream
@@ -34,23 +37,32 @@ class ScriptureBook(val code: String, val name: String?, val chapters: Map<Int, 
 private val NOTE = Regex("""\\(f|fe|x|ef|ex)\b.*?\\\1\*""", RegexOption.DOT_MATCHES_ALL)
 private val NOTE_CALLER = Regex("""^\s*[^\s\\]*\s*""")
 private val WORD_ATTRIBUTES = Regex("""\|[^\\]*?(?=\\\+?w\*)""")
+private val RUBY = Regex("""\\rb\s+(.*?)(?:\|([^\\]*))?\\rb\*""", RegexOption.DOT_MATCHES_ALL)
+private val ATTRIBUTE = Regex("""\w+="[^"]*"(?:\s+\w+="[^"]*")*""")
 private val MARKER = Regex("""\\\+?[a-z0-9-]+\*|\\\+?[a-z0-9-]+\s?""")
 private val WHITESPACE = Regex("""\s+""")
 private val VERSE = Regex("""\\v\s+(\d+)(?:-(\d+))?[a-z]?\s*""")
 private val NON_SCRIPTURE = Regex("""^\\(?:ms\d?|mr|s\d?|sr|r|d|sp|cl|cd|cp|qa|rem|h|toc\d|mt\d?|imt\d?|is\d?|ip|id|b)\b""")
 
-/** Strips word attributes and markers, keeping the scripture text. Notes become [NOTE_MARK]ed footnotes or cross-references. */
+/** Strips word attributes and markers, keeping the scripture text. Ruby (\rb base|reading\rb*) becomes [RUBY_MARK]ed text. Notes become [NOTE_MARK]ed footnotes or cross-references. */
 internal fun stripUsfmMarkup(text: String): String =
         text.replace(NOTE) { noteMarkup(it) }.removeMarkers()
 
 private fun String.removeMarkers(): String =
-        replace(WORD_ATTRIBUTES, "").replace(MARKER, "").replace(WHITESPACE, " ").trim()
+        replace(RUBY) { rubyMarkup(it) }.replace(WORD_ATTRIBUTES, "").replace(MARKER, "").replace(WHITESPACE, " ").trim()
+
+/** The base with its reading, or just the base when the reading is empty or attributes (e.g. strong="H430"). */
+private fun rubyMarkup(match: MatchResult): String {
+    val base = match.groupValues[1]
+    val reading = match.groupValues[2].trim()
+    return if (base.isBlank() || reading.isEmpty() || ATTRIBUTE.matches(reading)) base else "$RUBY_MARK$base$RUBY_SEPARATOR$reading$RUBY_MARK"
+}
 
 /** A footnote (\f) or cross-reference (\x) without its caller, e.g. "1:1 Some text." */
 private fun noteMarkup(match: MatchResult): String {
     val marker = match.groupValues[1]
     val body = match.value.removePrefix("\\$marker").removeSuffix("\\$marker*")
-            .replace(NOTE_CALLER, "").removeMarkers()
+            .replace(NOTE_CALLER, "").removeMarkers().removeRuby()
     if (body.isEmpty()) return ""
     val kind = if (marker.contains('x')) 'x' else 'f'
     return "$NOTE_MARK$kind$body$NOTE_MARK"

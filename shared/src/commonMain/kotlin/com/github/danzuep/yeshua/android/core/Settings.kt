@@ -23,6 +23,7 @@ data class Settings(
     val simpleReadingModeOn: Boolean,
     val hideSearchButton: Boolean,
     @Highlight.Companion.AvailableColor val defaultHighlightColor: Int,
+    val rubyOn: Boolean = true,
 ) {
     companion object {
         const val MIN_FONT_SIZE_SCALE = 0.5F
@@ -42,6 +43,7 @@ data class Settings(
             simpleReadingModeOn = false,
             hideSearchButton = false,
             defaultHighlightColor = Highlight.COLOR_NONE,
+            rubyOn = true,
         )
     }
 }

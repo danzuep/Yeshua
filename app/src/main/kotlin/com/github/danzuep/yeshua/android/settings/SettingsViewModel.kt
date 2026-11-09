@@ -58,6 +58,7 @@ class SettingsViewModel @Inject constructor(
         nightModeStringRes = nightModeStringResource(Settings.DEFAULT.nightMode),
         simpleReadingModeOn = Settings.DEFAULT.simpleReadingModeOn,
         hideSearchButton = Settings.DEFAULT.hideSearchButton,
+        rubyOn = Settings.DEFAULT.rubyOn,
         defaultHighlightColor = Settings.DEFAULT.defaultHighlightColor,
         backupState = ViewState.BackupRestoreState.Idle,
         restoreState = ViewState.BackupRestoreState.Idle,
@@ -83,6 +84,7 @@ class SettingsViewModel @Inject constructor(
         @StringRes val nightModeStringRes: Int,
         val simpleReadingModeOn: Boolean,
         val hideSearchButton: Boolean,
+        val rubyOn: Boolean,
         @Highlight.Companion.AvailableColor val defaultHighlightColor: Int,
         val backupState: BackupRestoreState,
         val restoreState: BackupRestoreState,
@@ -134,6 +136,7 @@ class SettingsViewModel @Inject constructor(
                     nightModeStringRes = nightModeStringResource(settings.nightMode),
                     simpleReadingModeOn = settings.simpleReadingModeOn,
                     hideSearchButton = settings.hideSearchButton,
+                    rubyOn = settings.rubyOn,
                     defaultHighlightColor = settings.defaultHighlightColor,
                 )
             }
@@ -202,6 +205,10 @@ class SettingsViewModel @Inject constructor(
 
     fun saveHideSearchButton(hideSearchButton: Boolean) {
         updateSettings { it.copy(hideSearchButton = hideSearchButton) }
+    }
+
+    fun saveRubyOn(rubyOn: Boolean) {
+        updateSettings { it.copy(rubyOn = rubyOn) }
     }
 
     fun saveDefaultHighlightColor(@Highlight.Companion.AvailableColor defaultHighlightColor: Int) {
