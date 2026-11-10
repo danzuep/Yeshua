@@ -83,6 +83,7 @@ class TranslationSpinnerAdapterTest : BaseUnitTest() {
         ) { viewEvent ->
             when (viewEvent) {
                 is ReadingToolbar.ViewEvent.OpenBookmarks -> fail()
+                is ReadingToolbar.ViewEvent.OpenTimeline -> fail()
                 is ReadingToolbar.ViewEvent.OpenCopyright -> fail()
                 is ReadingToolbar.ViewEvent.OpenHighlights -> fail()
                 is ReadingToolbar.ViewEvent.OpenNotes -> fail()
@@ -154,6 +155,7 @@ class TranslationSpinnerAdapterTest : BaseUnitTest() {
         ) { viewEvent ->
             when (viewEvent) {
                 is ReadingToolbar.ViewEvent.OpenBookmarks -> fail()
+                is ReadingToolbar.ViewEvent.OpenTimeline -> fail()
                 is ReadingToolbar.ViewEvent.OpenCopyright -> fail()
                 is ReadingToolbar.ViewEvent.OpenHighlights -> fail()
                 is ReadingToolbar.ViewEvent.OpenNotes -> fail()

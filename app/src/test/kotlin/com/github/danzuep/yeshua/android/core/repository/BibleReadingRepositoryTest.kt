@@ -74,6 +74,24 @@ class BibleReadingRepositoryTest : BaseUnitTest() {
     }
 
     @Test
+    fun `test saveCurrentVerseIndex() adds the verse left behind to the timeline only when changing chapter`() = runTest {
+        coEvery { localReadingStorage.readCurrentVerseIndex() } returns VerseIndex(1, 2, 3)
+        coEvery { localReadingStorage.saveCurrentVerseIndex(any()) } returns Unit
+        coEvery { localReadingStorage.readCurrentTranslation() } returns MockContents.kjvShortName
+        coEvery { localReadingStorage.readParallelTranslations() } returns emptyList()
+        coEvery { localReadingStorage.readTimeline() } returns emptyList()
+        coEvery { localReadingStorage.saveTimeline(any()) } returns Unit
+
+        val bibleReadingRepository = BibleReadingRepository(localReadingStorage, testScope)
+        bibleReadingRepository.currentVerseIndex.first()
+        bibleReadingRepository.saveCurrentVerseIndex(VerseIndex(1, 2, 9)) // same chapter
+        bibleReadingRepository.saveCurrentVerseIndex(VerseIndex(4, 5, 6)) // jump
+        bibleReadingRepository.saveCurrentVerseIndex(VerseIndex(1, 2, 3)) // jump back
+
+        assertEquals(listOf(VerseIndex(4, 5, 6), VerseIndex(1, 2, 9)), bibleReadingRepository.readTimeline())
+    }
+
+    @Test
     fun `test currentTranslation from constructor`() = runTest {
         coEvery { localReadingStorage.readCurrentVerseIndex() } returns VerseIndex(1, 2, 3)
         coEvery { localReadingStorage.readCurrentTranslation() } returns MockContents.kjvShortName

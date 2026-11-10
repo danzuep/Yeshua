@@ -32,6 +32,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import com.github.danzuep.yeshua.android.annotated.bookmarks.BookmarksActivity
+import com.github.danzuep.yeshua.android.timeline.TimelineActivity
 import com.github.danzuep.yeshua.android.annotated.highlights.HighlightsActivity
 import com.github.danzuep.yeshua.android.annotated.notes.NotesActivity
 import com.github.danzuep.yeshua.android.progress.ReadingProgressActivity
@@ -73,6 +74,7 @@ class NavigatorTest : BaseActivityTest() {
         testNavigate<HighlightsActivity>(Navigator.SCREEN_HIGHLIGHTS)
         testNavigate<NotesActivity>(Navigator.SCREEN_NOTES)
         testNavigate<SettingsActivity>(Navigator.SCREEN_SETTINGS)
+        testNavigate<TimelineActivity>(Navigator.SCREEN_TIMELINE)
     }
 
     private inline fun <reified A : Activity> testNavigate(@Navigator.Companion.Screen screen: Int) {

@@ -23,6 +23,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import com.github.danzuep.yeshua.android.core.ReadingTimeline
 import com.github.danzuep.yeshua.android.core.Verse
 import com.github.danzuep.yeshua.android.core.VerseIndex
 import com.github.danzuep.yeshua.android.core.VerseSearchQuery
@@ -68,9 +71,37 @@ class BibleReadingRepository(private val localReadingStorage: LocalReadingStorag
         }
     }
 
+    private val timelineMutex = Mutex()
+    private var timeline: List<VerseIndex>? = null
+
     suspend fun saveCurrentVerseIndex(verseIndex: VerseIndex) {
+        val previous = _currentVerseIndex.value
         _currentVerseIndex.value = verseIndex
         localReadingStorage.saveCurrentVerseIndex(verseIndex)
+        if (previous != null && ReadingTimeline.isJump(previous, verseIndex)) addToTimeline(previous)
+    }
+
+    // The timeline is a convenience, so it must never stop the reader from navigating.
+    private suspend fun addToTimeline(verseIndex: VerseIndex) {
+        try {
+            timelineMutex.withLock {
+                val updated = ReadingTimeline.push(timeline ?: localReadingStorage.readTimeline(), verseIndex)
+                localReadingStorage.saveTimeline(updated)
+                timeline = updated
+            }
+        } catch (e: Exception) {
+            Logger.withTag(TAG).e(e) { "Failed to add to the reading timeline" }
+        }
+    }
+
+    suspend fun readTimeline(): List<VerseIndex> = timelineMutex.withLock {
+        timeline ?: localReadingStorage.readTimeline().also { timeline = it }
+    }
+
+    suspend fun readTimelineLimit(): Int = localReadingStorage.readTimelineLimit()
+
+    suspend fun saveTimelineLimit(limit: Int) {
+        localReadingStorage.saveTimelineLimit(limit.coerceIn(ReadingTimeline.MIN_LIMIT, ReadingTimeline.MAX_LIMIT))
     }
 
     suspend fun saveCurrentTranslation(translationShortName: String) {

@@ -20,6 +20,11 @@
         app:showAsAction="never" />
 
     <item
+        android:id="@+id/action_timeline"
+        android:title="@string/action_timeline"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/action_bookmarks"
         android:title="@string/action_bookmarks"
         app:showAsAction="never" />

@@ -47,6 +47,8 @@ class MetadataDao(sqliteHelper: SQLiteOpenHelper) {
         const val KEY_BOOKMARKS_SORT_ORDER = "bookmarksSortOrder"
         const val KEY_HIGHLIGHTS_SORT_ORDER = "highlightsSortOrder"
         const val KEY_NOTES_SORT_ORDER = "notesSortOrder"
+        const val KEY_READING_TIMELINE = "readingTimeline"
+        const val KEY_READING_TIMELINE_LIMIT = "readingTimelineLimit"
     }
 
     private val db by lazy { sqliteHelper.writableDatabase }

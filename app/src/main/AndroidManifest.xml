@@ -32,6 +32,7 @@
         <activity android:name="com.github.danzuep.yeshua.android.annotated.highlights.HighlightsActivity" />
         <activity android:name="com.github.danzuep.yeshua.android.annotated.notes.NotesActivity" />
         <activity android:name=".progress.ReadingProgressActivity" />
+        <activity android:name=".timeline.TimelineActivity" />
         <activity android:name=".reading.ReadingActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
