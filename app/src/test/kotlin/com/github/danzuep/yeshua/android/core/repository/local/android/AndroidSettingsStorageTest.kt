@@ -45,9 +45,9 @@ class AndroidSettingsStorageTest : BaseSqliteTest() {
 
     @Test
     fun testSaveThenRead() = runTest {
-        androidSettingsStorage.saveSettings(Settings(false, Settings.NIGHT_MODE_ON, 1.25F, false, false, Highlight.COLOR_PINK))
+        androidSettingsStorage.saveSettings(Settings(false, Settings.NIGHT_MODE_ON, 1.25F, false, false, Highlight.COLOR_PINK, false))
 
-        val expected = Settings(false, Settings.NIGHT_MODE_ON, 1.25F, false, false, Highlight.COLOR_PINK)
+        val expected = Settings(false, Settings.NIGHT_MODE_ON, 1.25F, false, false, Highlight.COLOR_PINK, false)
         val actual = androidSettingsStorage.readSettings()
         assertEquals(expected, actual)
     }

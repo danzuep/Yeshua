@@ -32,13 +32,26 @@
         <activity android:name="com.github.danzuep.yeshua.android.annotated.highlights.HighlightsActivity" />
         <activity android:name="com.github.danzuep.yeshua.android.annotated.notes.NotesActivity" />
         <activity android:name=".progress.ReadingProgressActivity" />
-        <activity android:name=".reading.ReadingActivity" />
+        <activity android:name=".timeline.TimelineActivity" />
+        <activity android:name=".reading.ReadingActivity" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="bible" android:host="yeshua" />
+            </intent-filter>
+        </activity>
         <activity
             android:name=".search.SearchActivity"
             android:exported="true"
             android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.SEARCH" />
+            </intent-filter>
+            <intent-filter android:label="Ask ${appName}">
+                <action android:name="android.intent.action.PROCESS_TEXT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
             </intent-filter>
             <meta-data
                 android:name="android.app.searchable"

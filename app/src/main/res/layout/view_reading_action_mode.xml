@@ -14,10 +14,11 @@
         android:src="@drawable/ic_highlight" />
 
     <ImageButton
-        android:id="@+id/action_copy"
+        android:id="@+id/action_bookmark_verse"
         style="@style/ReadingActionModeButton"
-        android:contentDescription="@string/action_copy"
-        android:src="@drawable/ic_copy" />
+        android:contentDescription="@string/action_bookmark_verse"
+        android:src="@drawable/ic_bookmark"
+        app:tint="?attr/colorControlNormal" />
 
     <ImageButton
         android:id="@+id/action_share"
@@ -26,9 +27,8 @@
         android:src="@drawable/ic_share" />
 
     <ImageButton
-        android:id="@+id/action_bookmark_verse"
+        android:id="@+id/action_copy"
         style="@style/ReadingActionModeButton"
-        android:contentDescription="@string/action_bookmark_verse"
-        android:src="@drawable/ic_bookmark"
-        app:tint="?attr/colorControlNormal" />
+        android:contentDescription="@string/action_copy"
+        android:src="@drawable/ic_copy" />
 </LinearLayout>

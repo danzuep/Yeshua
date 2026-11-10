@@ -109,6 +109,11 @@ class SettingsRepositoryTest : BaseUnitTest() {
     }
 
     @Test
+    fun `test saveSettings() for ruby`() = runTest {
+        saveUpdatedSettingsAndVerifySaveSettingsIsCalled(Settings.DEFAULT.copy(rubyOn = false))
+    }
+
+    @Test
     fun `test saveSettings() for highlight color`() = runTest {
         saveUpdatedSettingsAndVerifySaveSettingsIsCalled(Settings.DEFAULT.copy(defaultHighlightColor = Highlight.COLOR_PURPLE))
     }

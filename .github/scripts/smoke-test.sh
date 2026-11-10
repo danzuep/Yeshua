@@ -66,7 +66,13 @@ if ! grep -q "The light shines in the darkness" ui.xml 2> /dev/null; then
   echo "FAIL: expected flowing paragraph text (John 1:1-5 not in one paragraph)"
   status=1
 fi
-# Bookmark the first verse (long-press it, tap Bookmark) and capture the screen: the heart is stacked under the verse number.
+# Capture the ruby added to verse 2: the reading is drawn above its base, while the text stays plain.
+adb exec-out screencap -p > screen-ruby.png
+if ! grep -q "Ruby" ui.xml 2> /dev/null; then
+  echo "FAIL: ruby base text was not shown"
+  status=1
+fi
+# Bookmark the first verse (tap it, then tap Bookmark) and capture the screen: the heart is stacked under the verse number.
 verse_xy=$(python3 - << 'PY'
 import re
 xml = open("ui.xml", encoding="utf-8").read()
@@ -77,7 +83,7 @@ if node:
 PY
 )
 if [ -n "$verse_xy" ]; then
-  adb shell input swipe $verse_xy $verse_xy 1500
+  adb shell input tap $verse_xy
   sleep 2
   dump_ui
   if tap_desc "Bookmark"; then
@@ -90,7 +96,7 @@ if [ -n "$verse_xy" ]; then
   adb shell input keyevent KEYCODE_BACK
   sleep 1
 else
-  echo "FAIL: could not find a verse to long-press"
+  echo "FAIL: could not find a verse to tap"
   status=1
 fi
 # Scroll to the start of John 2 and capture it: the chapter starts inline with a bold "¶2" instead of a heading and break.

@@ -44,6 +44,7 @@ import androidx.annotation.DrawableRes
 import androidx.core.content.ContextCompat
 import com.github.danzuep.yeshua.android.R
 import com.github.danzuep.yeshua.android.core.Settings
+import com.github.danzuep.yeshua.android.core.toRubyParts
 import com.github.danzuep.yeshua.android.core.Verse
 import com.github.danzuep.yeshua.android.core.VerseIndex
 import com.github.danzuep.yeshua.android.databinding.ItemParagraphBinding
@@ -71,6 +72,9 @@ class ParagraphItem(
         /** Whether this is the last part of [verse], where its note and footnote icons go. */
         var endsVerse = true
     }
+
+    override val scrollWeight: Int
+        get() = (heading?.length ?: 0) + segments.sumOf { it.text.length }
 
     companion object {
         const val CHAPTER_MARK = '¶'
@@ -123,19 +127,25 @@ class ParagraphItem(
         }
     }
 
-    fun textForDisplay(): CharSequence {
+    /** With [rubyOn], readings are drawn above their base text; otherwise only the base text is shown.
+     * [themedContext] should be the view's, because the application context ignores the in-app night mode. */
+    fun textForDisplay(rubyOn: Boolean = true, themedContext: Context = context): CharSequence {
         val builder = SpannableStringBuilder()
         val newRanges = ArrayList<Range>(segments.size)
 
         heading?.let {
-            builder.append(it).append('\n')
-            builder.setSpan(StyleSpan(Typeface.BOLD), 0, it.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-            builder.setSpan(RelativeSizeSpan(1.1F), 0, it.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            builder.appendRuby(it, rubyOn)
+            builder.setSpan(StyleSpan(Typeface.BOLD), 0, builder.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            builder.setSpan(RelativeSizeSpan(1.1F), 0, builder.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            builder.append('\n')
         }
 
-        val selectedColor = ContextCompat.getColor(context, R.color.verse_selected)
+        val selectedColor = ContextCompat.getColor(themedContext, R.color.verse_selected)
         segments.forEachIndexed { index, segment ->
-            if (index > 0 && !segment.text.startsWith('\n')) builder.append(' ')
+            // Line breaks go before the label, otherwise the label is left at the end of the previous line.
+            val segmentText = segment.text.trimStart('\n')
+            val lineBreaks = segment.text.length - segmentText.length
+            if (lineBreaks > 0) builder.append("\n".repeat(lineBreaks)) else if (index > 0) builder.append(' ')
 
             val verseIndex = segment.verse.verseIndex.verseIndex
             val start = builder.length
@@ -167,7 +177,7 @@ class ParagraphItem(
             }
 
             val textStart = builder.length
-            builder.append(segment.text)
+            builder.appendRuby(segmentText, rubyOn)
             highlights[verseIndex]?.let { builder.setSpans(createHighlightSpans(it), textStart, builder.length) }
 
             if (segment.endsVerse) {
@@ -183,6 +193,17 @@ class ParagraphItem(
 
         ranges = newRanges
         return builder
+    }
+
+    private fun SpannableStringBuilder.appendRuby(text: String, rubyOn: Boolean) {
+        text.toRubyParts().forEach { part ->
+            val partStart = length
+            append(part.text)
+            val reading = part.reading
+            if (rubyOn && !reading.isNullOrEmpty() && part.text.isNotEmpty()) {
+                setSpan(RubySpan(part.text, reading), partStart, length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            }
+        }
     }
 
     private fun SpannableStringBuilder.appendDrawable(
@@ -231,6 +252,37 @@ internal class LabelWithIconSpan(private val label: String, private val icon: Dr
     }
 }
 
+/** Draws [reading] in small text centred above [base], making the line taller and the span as wide as the wider of the two. */
+internal class RubySpan(private val base: String, private val reading: String) : ReplacementSpan() {
+    private fun readingPaint(paint: Paint) = Paint(paint).apply {
+        textSize = paint.textSize * READING_SCALE
+        typeface = Typeface.create(paint.typeface, Typeface.NORMAL)
+    }
+
+    override fun getSize(paint: Paint, text: CharSequence?, start: Int, end: Int, fm: Paint.FontMetricsInt?): Int {
+        if (fm != null) {
+            paint.getFontMetricsInt(fm)
+            val extra = readingPaint(paint).fontMetricsInt.let { it.descent - it.ascent }
+            fm.ascent -= extra
+            fm.top -= extra
+        }
+        return maxOf(paint.measureText(base), readingPaint(paint).measureText(reading)).roundToInt()
+    }
+
+    override fun draw(
+            canvas: Canvas, text: CharSequence?, start: Int, end: Int, x: Float, top: Int, y: Int, bottom: Int, paint: Paint
+    ) {
+        val width = getSize(paint, text, start, end, null)
+        val readingPaint = readingPaint(paint)
+        canvas.drawText(base, x + (width - paint.measureText(base)) / 2, y.toFloat(), paint)
+        canvas.drawText(reading, x + (width - readingPaint.measureText(reading)) / 2, y + paint.ascent() - readingPaint.descent(), readingPaint)
+    }
+
+    private companion object {
+        const val READING_SCALE = 0.5F
+    }
+}
+
 @SuppressLint("ClickableViewAccessibility")
 private class ParagraphViewHolder(inflater: LayoutInflater, parent: ViewGroup)
     : BaseViewHolder<ParagraphItem, ItemParagraphBinding>(ItemParagraphBinding.inflate(inflater, parent, false)) {
@@ -265,7 +317,7 @@ private class ParagraphViewHolder(inflater: LayoutInflater, parent: ViewGroup)
 
     override fun bind(settings: Settings, item: ParagraphItem, payloads: List<Any>) {
         payloads.forEach { payload -> item.update(payload as VerseUpdate) }
-        viewBinding.text.text = item.textForDisplay()
+        viewBinding.text.text = item.textForDisplay(settings.rubyOn, itemView.context)
         viewBinding.text.setPrimaryTextSize(settings)
     }
 }

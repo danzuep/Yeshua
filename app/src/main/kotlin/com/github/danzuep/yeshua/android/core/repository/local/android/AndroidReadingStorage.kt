@@ -20,9 +20,11 @@ package com.github.danzuep.yeshua.android.core.repository.local.android
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.github.danzuep.yeshua.android.BuildConfig
+import com.github.danzuep.yeshua.android.core.ReadingTimeline
 import com.github.danzuep.yeshua.android.core.Verse
 import com.github.danzuep.yeshua.android.core.VerseIndex
 import com.github.danzuep.yeshua.android.core.VerseSearchQuery
+import com.github.danzuep.yeshua.android.core.removeRuby
 import com.github.danzuep.yeshua.android.core.repository.local.LocalReadingStorage
 import com.github.danzuep.yeshua.android.core.repository.local.android.db.AndroidDatabase
 import com.github.danzuep.yeshua.android.core.repository.local.android.db.MetadataDao
@@ -53,6 +55,23 @@ class AndroidReadingStorage(private val androidDatabase: AndroidDatabase) : Loca
         }
     }
 
+    override suspend fun readTimeline(): List<VerseIndex> = withContext(Dispatchers.IO) {
+        ReadingTimeline.parse(androidDatabase.metadataDao.read(MetadataDao.KEY_READING_TIMELINE, ""))
+    }
+
+    override suspend fun saveTimeline(timeline: List<VerseIndex>) {
+        withContext(Dispatchers.IO) { androidDatabase.metadataDao.save(MetadataDao.KEY_READING_TIMELINE, ReadingTimeline.serialize(timeline)) }
+    }
+
+    override suspend fun readTimelineLimit(): Int = withContext(Dispatchers.IO) {
+        androidDatabase.metadataDao.read(MetadataDao.KEY_READING_TIMELINE_LIMIT, ReadingTimeline.DEFAULT_LIMIT.toString())
+                .toIntOrNull()?.coerceIn(ReadingTimeline.MIN_LIMIT, ReadingTimeline.MAX_LIMIT) ?: ReadingTimeline.DEFAULT_LIMIT
+    }
+
+    override suspend fun saveTimelineLimit(limit: Int) {
+        withContext(Dispatchers.IO) { androidDatabase.metadataDao.save(MetadataDao.KEY_READING_TIMELINE_LIMIT, limit.toString()) }
+    }
+
     override suspend fun readCurrentTranslation(): String = withContext(Dispatchers.IO) {
         androidDatabase.metadataDao.read(MetadataDao.KEY_CURRENT_TRANSLATION, "")
     }
@@ -71,11 +90,11 @@ class AndroidReadingStorage(private val androidDatabase: AndroidDatabase) : Loca
     }
 
     override suspend fun readBookNames(translationShortName: String): List<String> = withContext(Dispatchers.IO) {
-        androidDatabase.bookNamesDao.read(translationShortName)
+        androidDatabase.bookNamesDao.read(translationShortName).map { it.removeRuby() }
     }
 
     override suspend fun readBookShortNames(translationShortName: String): List<String> = withContext(Dispatchers.IO) {
-        androidDatabase.bookNamesDao.readShortName(translationShortName)
+        androidDatabase.bookNamesDao.readShortName(translationShortName).map { it.removeRuby() }
     }
 
     override suspend fun readBookIndicesWithVerses(translationShortName: String): Set<Int> = withContext(Dispatchers.IO) {

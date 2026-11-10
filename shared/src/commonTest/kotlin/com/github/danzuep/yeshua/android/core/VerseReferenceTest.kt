@@ -24,6 +24,12 @@ class VerseReferenceTest {
             findVerseReferences(bookNames, defaultBook).map { substring(it.start, it.end) to it.verseIndex }
 
     @Test
+    fun rangeKeepsItsLastVerse() {
+        val references = "Genesis 2:3-5, 8-9, 11".findVerseReferences(emptyList(), 0)
+        assertEquals(listOf(4, 8, 10), references.map { it.endVerse })
+    }
+
+    @Test
     fun singleReference() {
         assertEquals(listOf("Genesis 2:3" to VerseIndex(0, 1, 2)), "Genesis 2:3".links())
     }

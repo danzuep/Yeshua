@@ -105,17 +105,22 @@ class SearchActivity : BaseActivity<ActivitySearchBinding, SearchViewModel.ViewA
 
     /** Voice input (launchRecognizer) returns the recognised text as an ACTION_SEARCH intent carrying SearchManager.QUERY. */
     private fun handleSearchIntent(intent: Intent) {
-        if (intent.action != Intent.ACTION_SEARCH) return
-        val query = intent.getStringExtra(SearchManager.QUERY)?.trim()
+        val extra = when (intent.action) {
+            Intent.ACTION_SEARCH -> SearchManager.QUERY
+            Intent.ACTION_PROCESS_TEXT -> Intent.EXTRA_PROCESS_TEXT
+            else -> return
+        }
+        val query = intent.getCharSequenceExtra(extra)?.toString()?.trim()
         if (query.isNullOrEmpty()) return
 
         viewBinding.toolbar.setQuery(query)
         viewModel.search(query, false)
-        intent.removeExtra(SearchManager.QUERY)
+        intent.removeExtra(extra)
     }
 
     override fun onViewActionEmitted(viewAction: SearchViewModel.ViewAction) = when (viewAction) {
-        SearchViewModel.ViewAction.OpenReadingScreen -> navigator.navigate(this, Navigator.SCREEN_READING)
+        SearchViewModel.ViewAction.OpenReadingScreen -> navigator.navigate(
+            this, Navigator.SCREEN_READING, bundleOf(ReadingActivity.KEY_SELECT_VERSE to true))
         is SearchViewModel.ViewAction.OpenBook -> navigator.navigate(
             this, Navigator.SCREEN_READING, bundleOf(ReadingActivity.KEY_OPEN_BOOK to viewAction.bookIndex))
     }

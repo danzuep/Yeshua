@@ -31,6 +31,11 @@ Before pushing, review Kotlin changes carefully (unresolved references, imports,
 - `buildSrc/src/main/kotlin/Configurations.kt` pins plugin and library versions. The app version comes from the release tag (`-PappVersion`), not from this file.
 - `docs/RELEASING.md` covers releases and signing; `.github/scripts/` holds the smoke-test helpers; `shared/src/commonMain/.../testing` has fluent builders (`CoreVerse`, `CoreSettings`) for JVM tests.
 
+## Testing conventions
+
+- Put logic in the dependency-free `shared` module where possible and unit test all of it in `shared/src/commonTest` (JVM, no Android SDK). Keep Android code thin.
+- Prefer the fluent builders in `shared/src/commonMain/.../testing` (`CoreVerse`, `CoreReader`, `CoreSettings`, `CoreTranslations`) over hand-built fixtures. `CoreReader` can navigate (`toBook`, `toChapter`, `toVerse`), scroll (`scrollToBookEnd`, `scrollChapters`) and `swipe`.
+
 ## Repository facts
 
 - `main` is protected. Open PRs; the maintainer merges them.

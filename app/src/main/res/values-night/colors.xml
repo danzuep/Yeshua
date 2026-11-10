@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <color name="verse_pressed">#888888</color>
-    <color name="verse_selected">#888888</color>
+    <color name="verse_pressed">#444444</color>
+    <color name="verse_selected">#444444</color>
+    <color name="search_fab_background">@color/verse_selected</color>
 </resources>

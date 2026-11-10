@@ -19,6 +19,8 @@ package com.github.danzuep.yeshua.android.reading.verse
 import android.text.Spanned
 import android.text.style.ImageSpan
 import com.github.danzuep.yeshua.android.core.Bookmark
+import com.github.danzuep.yeshua.android.core.RUBY_MARK
+import com.github.danzuep.yeshua.android.core.RUBY_SEPARATOR
 import com.github.danzuep.yeshua.android.core.Verse
 import com.github.danzuep.yeshua.android.core.VerseIndex
 import com.github.danzuep.yeshua.android.reading.VerseUpdate
@@ -28,6 +30,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 @RunWith(RobolectricTestRunner::class)
 class ParagraphItemTest : BaseUnitTest() {
@@ -71,5 +74,19 @@ class ParagraphItemTest : BaseUnitTest() {
         assertEquals(0, noteCount(item))
         item.update(VerseUpdate(VerseIndex(57, 0, 2), VerseUpdate.NOTE_ADDED))
         assertEquals(1, noteCount(item))
+    }
+
+    @Test
+    fun `test ruby is drawn above its base only when enabled`() {
+        val rubyVerses = listOf(Verse(VerseIndex(57, 0, 0), Verse.Text("T", "A ${RUBY_MARK}神${RUBY_SEPARATOR}かみ${RUBY_MARK} B"), emptyList()))
+        val item = rubyVerses.toParagraphItems(context, emptyList(), emptyList(), emptyList()).single() as ParagraphItem
+
+        val on = item.textForDisplay(rubyOn = true) as Spanned
+        assertEquals(1, on.getSpans(0, on.length, RubySpan::class.java).size)
+        assertTrue(on.endsWith("A 神 B"))
+
+        val off = item.textForDisplay(rubyOn = false) as Spanned
+        assertEquals(0, off.getSpans(0, off.length, RubySpan::class.java).size)
+        assertTrue(off.endsWith("A 神 B"))
     }
 }

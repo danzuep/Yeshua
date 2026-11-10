@@ -17,6 +17,7 @@
 
 package com.github.danzuep.yeshua.android.reading
 
+import android.app.SearchManager
 import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
@@ -47,6 +48,7 @@ import com.github.danzuep.yeshua.android.core.VerseIndex
 import com.github.danzuep.yeshua.android.databinding.ActivityReadingBinding
 import com.github.danzuep.yeshua.android.infra.BaseActivity
 import com.github.danzuep.yeshua.android.reading.chapter.ChapterSelectionFragment
+import com.github.danzuep.yeshua.android.search.SearchActivity
 import com.github.danzuep.yeshua.android.reading.detail.VerseDetailViewLayout
 import com.github.danzuep.yeshua.android.reading.detail.VerseTextItem
 import com.github.danzuep.yeshua.android.reading.toolbar.ReadingToolbarFragment
@@ -56,7 +58,6 @@ import com.github.danzuep.yeshua.android.reading.verse.toBookIndex
 import com.github.danzuep.yeshua.android.reading.verse.toChapterIndex
 import com.github.danzuep.yeshua.android.reading.verse.toPagePosition
 import com.github.danzuep.yeshua.android.reading.verse.toStringForCopy
-import com.github.danzuep.yeshua.android.reading.verse.toStringForSharing
 import com.github.danzuep.yeshua.android.translations.TranslationsActivity
 import com.github.danzuep.yeshua.android.ui.highlightSwatch
 import com.github.danzuep.yeshua.android.ui.dialog
@@ -74,6 +75,7 @@ class ReadingActivity : BaseActivity<ActivityReadingBinding, ReadingViewModel.Vi
         private const val KEY_OPEN_NOTE = "com.github.danzuep.yeshua.android.KEY_OPEN_NOTE"
 
         /** Optional launch extra: the 0-based index of the book to open (e.g. 42 for John) instead of the last reading position. */
+        const val KEY_SELECT_VERSE = "com.github.danzuep.yeshua.android.KEY_SELECT_VERSE"
         const val KEY_OPEN_BOOK = "com.github.danzuep.yeshua.android.KEY_OPEN_BOOK"
 
         fun bundleForOpenNote(): Bundle = Bundle().apply { putBoolean(KEY_OPEN_NOTE, true) }
@@ -86,7 +88,6 @@ class ReadingActivity : BaseActivity<ActivityReadingBinding, ReadingViewModel.Vi
     private val selectedVerses: MutableSet<Verse> = mutableSetOf()
     private var settings: Settings? = null
     private var currentReadingStatus: ReadingViewModel.ViewState.CurrentReadingStatus? = null
-    private var translationNames: Map<String, String> = emptyMap()
 
     private var actionMode: ActionMode? = null
     private var installingDialog: AlertDialog? = null
@@ -123,29 +124,28 @@ class ReadingActivity : BaseActivity<ActivityReadingBinding, ReadingViewModel.Vi
         }
     }
 
-    private fun translationName(translationShortName: String): String = translationNames[translationShortName] ?: translationShortName
-
     private fun currentBookName(): String {
         val status = currentReadingStatus ?: return ""
         return status.bookNames.getOrElse(status.currentVerseIndex.bookIndex) { "" }
     }
 
     private fun copy() {
-        try {
-            if (selectedVerses.isEmpty()) return
+        if (selectedVerses.isEmpty()) return
 
-            val bookName = currentBookName()
-            val translationName = translationName(currentReadingStatus?.currentTranslation.orEmpty())
-            copyToClipBoard(
-                label = "${currentReadingStatus?.currentTranslation.orEmpty()} $bookName",
-                text = selectedVerses.toStringForCopy(bookName, translationName)
-            )
-            toast(R.string.toast_verses_copied)
-        } catch (e: Exception) {
-            Logger.withTag(tag).e(e) { "Failed to copy" }
-            toast(R.string.toast_unknown_error)
-        } finally {
-            actionMode?.finish()
+        val verses = selectedVerses.toList()
+        actionMode?.finish()
+        lifecycleScope.launch {
+            try {
+                val bookName = currentBookName()
+                copyToClipBoard(
+                    label = "${currentReadingStatus?.currentTranslation.orEmpty()} $bookName",
+                    text = verses.toStringForCopy(bookName)
+                )
+                toast(R.string.toast_verses_copied)
+            } catch (e: Exception) {
+                Logger.withTag(tag).e(e) { "Failed to copy" }
+                toast(R.string.toast_unknown_error)
+            }
         }
     }
 
@@ -155,7 +155,7 @@ class ReadingActivity : BaseActivity<ActivityReadingBinding, ReadingViewModel.Vi
 
             shareToSystem(
                 title = getString(R.string.text_share_with),
-                text = selectedVerses.toStringForSharing(currentBookName())
+                text = selectedVerses.toStringForCopy(currentBookName())
             )
         } catch (e: Exception) {
             Logger.withTag(tag).e(e) { "Failed to share" }
@@ -167,8 +167,13 @@ class ReadingActivity : BaseActivity<ActivityReadingBinding, ReadingViewModel.Vi
 
     private lateinit var drawerToggle: ActionBarDrawerToggle
     private lateinit var versePagerAdapter: VersePagerAdapter
-    private var verseReportedByScroll: VerseIndex? = null
+    // Several reports can be in flight before the saved position comes back, so a single value could miss the match.
+    private val versesReportedByScroll = mutableSetOf<VerseIndex>()
     private var userSwipingPager = false
+    private var redirectingSwipe = false
+    private var lastSelectedPage = -1
+    // Set until the reader has moved to the referenced verse, because moving to another chapter ends the selection.
+    private var pendingReferenceSelection: Pair<VerseIndex, Int>? = null
     private val referenceBackStack = ArrayDeque<VerseIndex>()
 
     // The launcher alias reuses a running reader, so an open-book request arrives here instead of onCreate().
@@ -177,6 +182,35 @@ class ReadingActivity : BaseActivity<ActivityReadingBinding, ReadingViewModel.Vi
         setIntent(intent)
         val openBook = intent.getIntExtra(KEY_OPEN_BOOK, -1)
         if (openBook in 0 until Bible.BOOK_COUNT) viewModel.openBook(openBook)
+        openDeepLink(intent)
+        selectOpenedVerse(intent)
+    }
+
+    /** Selects the current verse, as when following a cross reference, if the caller asked for it. */
+    private fun selectOpenedVerse(intent: Intent) {
+        if (!intent.getBooleanExtra(KEY_SELECT_VERSE, false)) return
+        intent.removeExtra(KEY_SELECT_VERSE)
+        lifecycleScope.launch {
+            val verseIndex = viewModel.currentVerseIndex()
+            if (currentReadingStatus?.currentVerseIndex == verseIndex) {
+                selectReferencedVerses(verseIndex, verseIndex.verseIndex)
+            } else {
+                pendingReferenceSelection = verseIndex to verseIndex.verseIndex
+            }
+        }
+    }
+
+    /** Opens `bible://yeshua/[<version>/]<reference>`, falling back to a search if it is not a reference. */
+    private fun openDeepLink(intent: Intent) {
+        val segments = intent.data?.takeIf { it.scheme == "bible" && it.host == "yeshua" }?.pathSegments ?: return
+        val reference = segments.lastOrNull()?.trim()?.takeIf { it.isNotEmpty() } ?: return
+        val version = segments.getOrNull(segments.size - 2)
+        lifecycleScope.launch {
+            if (!viewModel.openReference(reference, version)) {
+                startActivity(Intent(Intent.ACTION_SEARCH).setClass(this@ReadingActivity, SearchActivity::class.java)
+                    .putExtra(SearchManager.QUERY, reference))
+            }
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -184,6 +218,8 @@ class ReadingActivity : BaseActivity<ActivityReadingBinding, ReadingViewModel.Vi
 
         val openBook = intent.getIntExtra(KEY_OPEN_BOOK, -1)
         if (savedInstanceState == null && openBook in 0 until Bible.BOOK_COUNT) viewModel.openBook(openBook)
+        if (savedInstanceState == null) openDeepLink(intent)
+        if (savedInstanceState == null) selectOpenedVerse(intent)
 
         // Handle back navigation using OnBackPressedDispatcher
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
@@ -229,7 +265,8 @@ class ReadingActivity : BaseActivity<ActivityReadingBinding, ReadingViewModel.Vi
             // Neighbour pages report their own scroll position too; only the selected page may update the current verse.
             // The verse may belong to a neighbouring chapter that the page scrolled into.
             if (pagePosition == verseViewPager.currentItem) {
-                verseReportedByScroll = verseIndex
+                versesReportedByScroll.add(verseIndex)
+                if (versesReportedByScroll.size > 8) versesReportedByScroll.remove(versesReportedByScroll.first())
                 toolbarFragment.getFragment<ReadingToolbarFragment>().showReadingChapter(verseIndex, middleVerse)
                 viewModel.updateCurrentVerse(verseIndex)
             }
@@ -246,6 +283,27 @@ class ReadingActivity : BaseActivity<ActivityReadingBinding, ReadingViewModel.Vi
             }
 
             override fun onPageSelected(position: Int) {
+                val previousPage = lastSelectedPage
+                lastSelectedPage = position
+                if (redirectingSwipe) return
+                if (userSwipingPager && previousPage >= 0) {
+                    // The page may have been scrolled into a neighbouring chapter, so a swipe moves on from the chapter being read.
+                    val readingPage = currentReadingStatus?.currentVerseIndex?.takeIf { it.isValid() }?.toPagePosition()
+                    val target = readingPage?.plus(position - previousPage)
+                    if (target != null && target != position && target in 0 until Bible.TOTAL_CHAPTER_COUNT) {
+                        redirectingSwipe = true
+                        try {
+                            verseViewPager.setCurrentItem(target, false)
+                        } finally {
+                            redirectingSwipe = false
+                        }
+                        lastSelectedPage = target
+                        versePagerAdapter.scrollToChapterStart(target)
+                        appBar.setExpanded(true, true)
+                        viewModel.selectChapter(target.toBookIndex(), target.toChapterIndex())
+                        return
+                    }
+                }
                 val bookIndex = position.toBookIndex()
                 val chapterIndex = position.toChapterIndex()
                 if (userSwipingPager) {
@@ -275,11 +333,16 @@ class ReadingActivity : BaseActivity<ActivityReadingBinding, ReadingViewModel.Vi
             onClicked = ::hideVerseDetail,
             updateNote = viewModel::saveNote,
             reorderTranslations = viewModel::reorderTranslations,
-            openVerse = { verseIndex ->
+            openVerse = { verseIndex, endVerse ->
                 // Remember where the reference was followed from, so that back returns there.
                 viewBinding.verseDetailView.verseDetail?.verseIndex?.let { referenceBackStack.addLast(it) }
                 hideVerseDetail()
                 viewModel.selectVerse(verseIndex)
+                if (currentReadingStatus?.currentVerseIndex == verseIndex) {
+                    selectReferencedVerses(verseIndex, endVerse)
+                } else {
+                    pendingReferenceSelection = verseIndex to endVerse
+                }
             },
             hide = !openNoteWhenCreated
         )
@@ -299,8 +362,12 @@ class ReadingActivity : BaseActivity<ActivityReadingBinding, ReadingViewModel.Vi
 
     override fun onViewActionEmitted(viewAction: ReadingViewModel.ViewAction) {
         when (viewAction) {
-            is ReadingViewModel.ViewAction.ShowVerses ->
+            is ReadingViewModel.ViewAction.ShowVerses -> {
                 versePagerAdapter.setVerses(viewAction.translation, viewAction.bookIndex, viewAction.chapterIndex, viewAction.items)
+                // A selection made while the chapter was loading has not reached its items.
+                selectedVerses.filter { it.verseIndex.bookIndex == viewAction.bookIndex && it.verseIndex.chapterIndex == viewAction.chapterIndex }
+                    .forEach { versePagerAdapter.selectVerse(it.verseIndex) }
+            }
             is ReadingViewModel.ViewAction.ShowVerseDetail -> with(viewBinding.verseDetailView) {
                 verseDetail = viewAction.verseDetail
                 show(viewAction.content)
@@ -312,7 +379,6 @@ class ReadingActivity : BaseActivity<ActivityReadingBinding, ReadingViewModel.Vi
     }
 
     override fun onViewStateUpdated(viewState: ReadingViewModel.ViewState) {
-        translationNames = viewState.translationNames
         if (viewState.settings != settings) {
             applySettings(viewState.settings)
         }
@@ -355,13 +421,16 @@ class ReadingActivity : BaseActivity<ActivityReadingBinding, ReadingViewModel.Vi
                 parallel = status.parallelTranslations
             )
             // A verse reached by the user scrolling is already on screen; moving the pager would jump it to a chapter heading.
-            val reportedByScroll = status.currentVerseIndex == verseReportedByScroll
-            verseReportedByScroll = null
+            val reportedByScroll = status.currentVerseIndex in versesReportedByScroll
+            if (reportedByScroll) versesReportedByScroll.clear()
             val chapterChanged = previousVerseIndex.bookIndex != status.currentVerseIndex.bookIndex
                 || previousVerseIndex.chapterIndex != status.currentVerseIndex.chapterIndex
             if (!reportedByScroll && (chapterChanged || !versePagerAdapter.containsChapterInCurrentPage(status.currentVerseIndex))) {
                 val targetPage = status.currentVerseIndex.toPagePosition()
                 if (verseViewPager.currentItem != targetPage) verseViewPager.setCurrentItem(targetPage, false)
+                // A cached page is reused without a rebind, so it must be positioned explicitly.
+                val verse = status.currentVerseIndex
+                verseViewPager.post { versePagerAdapter.scrollToVerse(verse) }
             }
         }
         hideVerseDetail()
@@ -369,6 +438,11 @@ class ReadingActivity : BaseActivity<ActivityReadingBinding, ReadingViewModel.Vi
         if (previousVerseIndex.bookIndex != status.currentVerseIndex.bookIndex
             || previousVerseIndex.chapterIndex != status.currentVerseIndex.chapterIndex) {
             actionMode?.finish()
+        }
+
+        pendingReferenceSelection?.takeIf { it.first == status.currentVerseIndex }?.let { (verseIndex, endVerse) ->
+            pendingReferenceSelection = null
+            selectReferencedVerses(verseIndex, endVerse)
         }
     }
 
@@ -481,8 +555,7 @@ class ReadingActivity : BaseActivity<ActivityReadingBinding, ReadingViewModel.Vi
 
     override fun onVerseClicked(verse: Verse) {
         if (actionMode == null) {
-            showVerseDetail(verse.verseIndex, VerseDetailViewLayout.VERSE_DETAIL_VERSES)
-            return
+            actionMode = startSupportActionMode(actionModeCallback)
         }
 
         if (selectedVerses.contains(verse)) {
@@ -500,15 +573,29 @@ class ReadingActivity : BaseActivity<ActivityReadingBinding, ReadingViewModel.Vi
         }
     }
 
+    private fun selectReferencedVerses(verseIndex: VerseIndex, endVerse: Int) {
+        lifecycleScope.launch {
+            try {
+                val verses = viewModel.versesInRange(verseIndex, endVerse)
+                if (verses.isEmpty()) return@launch
+                actionMode?.finish()
+                actionMode = startSupportActionMode(actionModeCallback)
+                verses.forEach { verse ->
+                    selectedVerses.add(verse)
+                    versePagerAdapter.selectVerse(verse.verseIndex)
+                }
+            } catch (e: Exception) {
+                Logger.withTag(tag).e(e) { "Failed to select the referenced verses" }
+            }
+        }
+    }
+
     private fun showVerseDetail(verseIndex: VerseIndex, @VerseDetailViewLayout.Companion.VerseDetail content: Int) {
         viewModel.loadVerseDetail(verseIndex, content)
     }
 
     override fun onVerseLongClicked(verse: Verse) {
-        if (actionMode == null) {
-            actionMode = startSupportActionMode(actionModeCallback)
-        }
-        onVerseClicked(verse)
+        showVerseDetail(verse.verseIndex, VerseDetailViewLayout.VERSE_DETAIL_VERSES)
     }
 
     private fun highlightSelectedVerses() {
@@ -541,7 +628,7 @@ class ReadingActivity : BaseActivity<ActivityReadingBinding, ReadingViewModel.Vi
                 val bookName = viewModel.bookName(verse.text.translationShortName, verse.verseIndex.bookIndex)
                 copyToClipBoard(
                     label = "${verse.text.translationShortName} $bookName",
-                    text = verse.toStringForCopy(bookName, translationName(verse.text.translationShortName))
+                    text = verse.toStringForCopy(bookName)
                 )
                 toast(R.string.toast_verses_copied)
             } catch (e: Exception) {

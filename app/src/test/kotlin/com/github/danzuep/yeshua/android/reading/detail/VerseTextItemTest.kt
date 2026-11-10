@@ -38,7 +38,7 @@ class VerseTextItemTest : BaseUnitTest() {
     @Test
     fun testTextForDisplay() {
         assertEquals(
-                "KJV, Genesis 1:1\nIn the beginning God created the heaven and the earth.",
+                "Genesis 1:1 KJV\nIn the beginning God created the heaven and the earth.",
                 VerseTextItem(MockContents.kjvVerses[0].verseIndex, 0, MockContents.kjvVerses[0].text, MockContents.kjvBookNames[0]).textForDisplay.toString()
         )
     }
@@ -46,7 +46,7 @@ class VerseTextItemTest : BaseUnitTest() {
     @Test
     fun testTextForDisplayWithFollowingEmptyVerse() {
         assertEquals(
-                "KJV, Genesis 1:1-2\nIn the beginning God created the heaven and the earth.",
+                "Genesis 1:1-2 KJV\nIn the beginning God created the heaven and the earth.",
                 VerseTextItem(MockContents.kjvVerses[0].verseIndex, 1, MockContents.kjvVerses[0].text, MockContents.kjvBookNames[0]).textForDisplay.toString()
         )
     }

@@ -121,6 +121,7 @@ class SettingsViewModelTest : BaseUnitTest() {
         simpleReadingModeOn = Settings.DEFAULT.simpleReadingModeOn,
         nightModeStringRes = R.string.settings_text_night_mode_system,
         hideSearchButton = Settings.DEFAULT.hideSearchButton,
+        rubyOn = Settings.DEFAULT.rubyOn,
         defaultHighlightColor = Highlight.COLOR_NONE,
         backupState = SettingsViewModel.ViewState.BackupRestoreState.Idle,
         restoreState = SettingsViewModel.ViewState.BackupRestoreState.Idle,
@@ -512,6 +513,17 @@ class SettingsViewModelTest : BaseUnitTest() {
 
         settingsViewModel.markRestoreStateAsIdle()
         assertEquals(createDefaultViewState(), settingsViewModel.viewState().first())
+    }
+
+    @Test
+    fun `test saveRubyOn()`() = runTest {
+        every { settingsManager.settings() } returns flowOf(Settings.DEFAULT)
+        coEvery { settingsManager.saveSettings(Settings.DEFAULT.copy(rubyOn = false)) } returns Unit
+
+        settingsViewModel.saveRubyOn(rubyOn = true)
+        settingsViewModel.saveRubyOn(rubyOn = false)
+
+        coVerify(exactly = 1) { settingsManager.saveSettings(Settings.DEFAULT.copy(rubyOn = false)) }
     }
 
     @Test

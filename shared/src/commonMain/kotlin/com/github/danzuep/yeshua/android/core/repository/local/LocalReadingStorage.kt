@@ -26,6 +26,14 @@ interface LocalReadingStorage {
 
     suspend fun saveCurrentVerseIndex(verseIndex: VerseIndex)
 
+    suspend fun readTimeline(): List<VerseIndex>
+
+    suspend fun saveTimeline(timeline: List<VerseIndex>)
+
+    suspend fun readTimelineLimit(): Int
+
+    suspend fun saveTimelineLimit(limit: Int)
+
     suspend fun readCurrentTranslation(): String
 
     suspend fun saveCurrentTranslation(translationShortName: String)

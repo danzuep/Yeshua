@@ -32,6 +32,10 @@
     <string name="action_copy">📋</string>
     <string name="action_share">📤</string>
     <string name="action_reading_progress">@string/title_reading_progress</string>
+    <string name="title_timeline">🕘</string>
+    <string name="action_timeline">@string/title_timeline</string>
+    <string name="action_timeline_limit">#</string>
+    <string name="text_no_timeline">∅</string>
     <string name="action_bookmarks">@string/title_bookmarks</string>
     <string name="action_highlights">@string/title_highlights</string>
     <string name="action_notes">@string/title_notes</string>
@@ -133,6 +137,7 @@
     <string name="settings_title_night_mode">🌙</string>
     <string name="settings_header_reading"></string>
     <string name="settings_title_hide_search_button">🚫 🔍</string>
+    <string name="settings_title_ruby">ふ 振</string>
     <string name="settings_title_default_highlight_color">🎨 🖍</string>
     <string name="settings_header_backup_restore"></string>
     <string name="settings_title_backup">☁ 💾 ⬆</string>

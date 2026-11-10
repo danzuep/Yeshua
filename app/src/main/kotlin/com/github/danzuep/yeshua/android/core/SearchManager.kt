@@ -151,10 +151,10 @@ private fun String.isWordCharacterBefore(index: Int): Boolean =
 private fun String.isWordCharacterAt(index: Int): Boolean =
         Character.isLetterOrDigit(Character.codePointAt(this, index)) || Character.codePointAt(this, index) == '_'.code
 
-private val REFERENCE_REGEX = Regex("""(.*?\S)\s*(\d+)(?:[:.](\d+)(?:\s*-\s*(\d+))?)?""")
+private val REFERENCE_REGEX = Regex("""(.*?\S)\s*(\d+)(?:(?:[:.]|\s+)(\d+)(?:\s*-\s*(\d+))?)?""")
 
 /**
- * Parses references such as "John 1", "John 1:4", "1 John 3:2-5", "Gen. 1:1", "JHN1.1" or "jhn 1" against the book names
+ * Parses references such as "John 1", "John 1:4", "John 1 4", "1 John 3:2-5", "Gen. 1:1", "JHN1.1" or "jhn 1" against the book names
  * (or short names, or 3-letter book codes) of a translation. Returns null if the query is not a reference, so it can be searched as text.
  */
 internal fun parseReference(query: String, bookNames: List<String>, bookShortNames: List<String>): BibleReference? {
@@ -167,6 +167,10 @@ internal fun parseReference(query: String, bookNames: List<String>, bookShortNam
             ?: bookShortNames.indexOfFirst { it.normalizeBookName() == bookName }
                     .takeIf { it >= 0 }
             ?: BOOK_CODES.indexOfFirst { it.lowercase(Locale.getDefault()) == bookName.replace(" ", "") }
+                    .takeIf { it >= 0 }
+            ?: bookNames.indexOfFirst { bookName.length >= 3 && it.normalizeBookName().startsWith(bookName) }
+                    .takeIf { it >= 0 }
+            ?: bookShortNames.indexOfFirst { bookName.length >= 3 && it.normalizeBookName().startsWith(bookName) }
     if (bookIndex < 0) return null
 
     val chapterIndex = chapter.toIntOrNull()?.takeIf { it >= 1 }?.minus(1) ?: return null

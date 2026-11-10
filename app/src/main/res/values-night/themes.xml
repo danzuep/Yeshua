@@ -9,6 +9,13 @@
 
         <item name="windowActionModeOverlay">true</item>
 
+        <!-- DrawerLayout paints this behind the status bar and camera cutout. -->
+        <item name="colorPrimaryDark">@color/search_fab_background</item>
+
+        <!-- No system scrim behind the status and navigation bars. -->
+        <item name="android:enforceStatusBarContrast">false</item>
+        <item name="android:enforceNavigationBarContrast">false</item>
+
         <item name="android:windowAnimationStyle">@style/AppWindowAnimationStyle</item>
     </style>
 </resources>

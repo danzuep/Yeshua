@@ -66,6 +66,12 @@ class CoreScenariosTest {
         var parallel = emptyList<String>()
         override suspend fun readCurrentVerseIndex() = verseIndex
         override suspend fun saveCurrentVerseIndex(verseIndex: VerseIndex) { this.verseIndex = verseIndex }
+        var timeline = emptyList<VerseIndex>()
+        var timelineLimit = 10
+        override suspend fun readTimeline() = timeline
+        override suspend fun saveTimeline(timeline: List<VerseIndex>) { this.timeline = timeline }
+        override suspend fun readTimelineLimit() = timelineLimit
+        override suspend fun saveTimelineLimit(limit: Int) { timelineLimit = limit }
         override suspend fun readCurrentTranslation() = translation
         override suspend fun saveCurrentTranslation(translationShortName: String) { translation = translationShortName }
         override suspend fun readParallelTranslations() = parallel
@@ -105,6 +111,15 @@ class CoreScenariosTest {
             .expectTranslation("WEBU").expectVerseIndex(VerseIndex(42, 2, 1)).expectVerseText(1, "WEBU 42:2:1")
             .toChapter(3).expectVerseIndex(VerseIndex(42, 3, 0))
             .toBook(0).expectVerseIndex(VerseIndex(0, 0, 0))
+    }
+
+    @Test
+    fun swipeAfterScrollingToTheBookEndGoesToTheNextBook() = runTest {
+        CoreReader(InMemoryReading()).toBook(42).toChapter(18).scrollToBookEnd().expectVerseIndex(VerseIndex(42, 20, 0))
+            .swipe().expectVerseIndex(VerseIndex(43, 0, 0))
+            .swipe(-1).expectVerseIndex(VerseIndex(42, 20, 0))
+            .toChapter(18).scrollChapters(5).expectVerseIndex(VerseIndex(42, 20, 0))
+            .scrollChapters(-30).expectVerseIndex(VerseIndex(42, 0, 0))
     }
 
     @Test
@@ -155,10 +170,10 @@ class CoreScenariosTest {
         val repository = SettingsRepository(storage, scope)
         scope.advanceUntilIdle()
 
-        CoreSettings(repository).keepScreenOn(false).nightMode(Settings.NIGHT_MODE_ON).fontSizeScale(10F).hideSearchButton()
+        CoreSettings(repository).keepScreenOn(false).nightMode(Settings.NIGHT_MODE_ON).fontSizeScale(10F).hideSearchButton().ruby(false)
 
         assertEquals(
-            Settings.DEFAULT.copy(keepScreenOn = false, nightMode = Settings.NIGHT_MODE_ON, fontSizeScale = Settings.MAX_FONT_SIZE_SCALE, hideSearchButton = true),
+            Settings.DEFAULT.copy(keepScreenOn = false, nightMode = Settings.NIGHT_MODE_ON, fontSizeScale = Settings.MAX_FONT_SIZE_SCALE, hideSearchButton = true, rubyOn = false),
             storage.saved
         )
     }

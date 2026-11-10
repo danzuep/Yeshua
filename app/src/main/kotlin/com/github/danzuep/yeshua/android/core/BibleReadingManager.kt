@@ -88,6 +88,15 @@ class BibleReadingManager(
         bibleReadingRepository.saveCurrentVerseIndex(verseIndex)
     }
 
+    /** The verses the reader jumped away from, most recent first, limited to [timelineLimit]. */
+    suspend fun readTimeline(): List<VerseIndex> = bibleReadingRepository.readTimeline().take(timelineLimit())
+
+    suspend fun timelineLimit(): Int = bibleReadingRepository.readTimelineLimit()
+
+    suspend fun saveTimelineLimit(limit: Int) {
+        bibleReadingRepository.saveTimelineLimit(limit)
+    }
+
     fun currentTranslation(): Flow<String> = bibleReadingRepository.currentTranslation
 
     suspend fun saveCurrentTranslation(translationShortName: String) {

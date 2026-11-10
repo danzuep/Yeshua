@@ -28,6 +28,7 @@ import com.github.danzuep.yeshua.android.R
 class ReadingToolbar : MaterialToolbar {
     sealed class ViewEvent {
         data class OpenCopyright(val translationShortName: String) : ViewEvent()
+        object OpenTimeline : ViewEvent()
         object OpenBookmarks : ViewEvent()
         object OpenHighlights : ViewEvent()
         object OpenNotes : ViewEvent()
@@ -88,6 +89,10 @@ class ReadingToolbar : MaterialToolbar {
                 }
                 R.id.action_reading_progress -> {
                     onViewEvent(ViewEvent.OpenReadingProgress)
+                    true
+                }
+                R.id.action_timeline -> {
+                    onViewEvent(ViewEvent.OpenTimeline)
                     true
                 }
                 R.id.action_bookmarks -> {

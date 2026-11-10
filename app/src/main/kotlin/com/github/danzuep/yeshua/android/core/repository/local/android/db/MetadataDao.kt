@@ -41,11 +41,14 @@ class MetadataDao(sqliteHelper: SQLiteOpenHelper) {
         const val KEY_SIMPLE_READING_MODE_ON = "simpleReadingModeOn"
         const val KEY_HIDE_SEARCH_BUTTON = "hideSearchButton"
         const val KEY_DEFAULT_HIGHLIGHT_COLOR = "defaultHighlightColor"
+        const val KEY_RUBY_ON = "rubyOn"
         const val KEY_TRANSLATION_LIST_REFRESH_TIMESTAMP = "translationListRefreshTimestamp"
         const val KEY_DOWNLOAD_SITES = "downloadSites"
         const val KEY_BOOKMARKS_SORT_ORDER = "bookmarksSortOrder"
         const val KEY_HIGHLIGHTS_SORT_ORDER = "highlightsSortOrder"
         const val KEY_NOTES_SORT_ORDER = "notesSortOrder"
+        const val KEY_READING_TIMELINE = "readingTimeline"
+        const val KEY_READING_TIMELINE_LIMIT = "readingTimelineLimit"
     }
 
     private val db by lazy { sqliteHelper.writableDatabase }

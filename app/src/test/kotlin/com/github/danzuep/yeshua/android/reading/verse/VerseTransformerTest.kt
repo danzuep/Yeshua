@@ -124,32 +124,43 @@ class VerseTransformerTest : BaseUnitTest() {
     fun `test toStringForCopy keeps non-UTF8 characters and adds the translation name`() {
         val text = "${HEADING}Title${HEADING}${PARAGRAPH}\u201CHello\u201D\u2014world\u00A0now\n\u2003Line two"
         assertEquals(
-                "John 1:16 (World English Bible)\n> \u201CHello\u201D\u2014world\u00A0now\n> \u2003Line two",
-                listOf(verse(15, text)).toStringForCopy("John", "World English Bible")
+                "John 1:16 T\n> \u201CHello\u201D\u2014world\u00A0now\n> \u2003Line two\n\n",
+                listOf(verse(15, text)).toStringForCopy("John")
         )
     }
 
     @Test
     fun `test toStringForCopy as Markdown for a single verse`() {
         assertEquals(
-                "John 1:16 (World English Bible)\n> For God so loved the world",
-                listOf(verse(15, "For God so loved the world")).toStringForCopy("John", "World English Bible")
+                "John 1:16 T\n> For God so loved the world\n\n",
+                listOf(verse(15, "For God so loved the world")).toStringForCopy("John")
         )
     }
 
     @Test
     fun `test toStringForCopy as Markdown for poetry lines`() {
         assertEquals(
-                "John 1:16 (World English Bible)\n> Line one\n> \u2003Line two",
-                listOf(verse(15, "${PARAGRAPH}\nLine one\n\u2003Line two")).toStringForCopy("John", "World English Bible")
+                "John 1:16 T\n> Line one\n> \u2003Line two\n\n",
+                listOf(verse(15, "${PARAGRAPH}\nLine one\n\u2003Line two")).toStringForCopy("John")
         )
+    }
+
+    @Test
+    fun `test toStringForCopy uses the uppercase display name of the translation`() {
+        val verse = Verse(VerseIndex(0, 3, 8), Verse.Text("engwebu", "A"), emptyList())
+        assertEquals("Genesis 4:9 WEBU\n> A\n\n", listOf(verse).toStringForCopy("Genesis"))
+    }
+
+    @Test
+    fun `test toStringForCopy splits verses that are not consecutive`() {
+        assertEquals("John 1:16 T\n> A\n\nJohn 1:18 T\n> C\n\n", listOf(verse(17, "C"), verse(15, "A")).toStringForCopy("John"))
     }
 
     @Test
     fun `test toStringForCopy as Markdown for consecutive verses`() {
         assertEquals(
-                "John 1:16-17 (World English Bible)\n> 16 A 17 B",
-                listOf(verse(15, "A"), verse(16, "B")).toStringForCopy("John", "World English Bible")
+                "John 1:16-17 T\n> 16 A 17 B\n\n",
+                listOf(verse(15, "A"), verse(16, "B")).toStringForCopy("John")
         )
     }
 
@@ -157,30 +168,28 @@ class VerseTransformerTest : BaseUnitTest() {
     fun `test toStringForCopy adds the chapter mark only across chapters`() {
         fun isaiah(chapter: Int, verse: Int, text: String) = Verse(VerseIndex(22, chapter - 1, verse - 1), Verse.Text("T", text), emptyList())
         assertEquals(
-                "Isaiah 52:13-53:1 (World English Bible)\n> 13 A 14 B 15 C \u00B653:1 D",
+                "Isaiah 52:13-53:1 T\n> 13 A 14 B 15 C \u00B653:1 D\n\n",
                 listOf(isaiah(52, 13, "A"), isaiah(52, 14, "B"), isaiah(52, 15, "C"), isaiah(53, 1, "D"))
-                        .toStringForCopy("Isaiah", "World English Bible")
+                        .toStringForCopy("Isaiah")
         )
         assertEquals(
-                "Isaiah 53:1-2 (World English Bible)\n> 1 D 2 E",
-                listOf(isaiah(53, 1, "D"), isaiah(53, 2, "E")).toStringForCopy("Isaiah", "World English Bible")
+                "Isaiah 53:1-2 T\n> 1 D 2 E\n\n",
+                listOf(isaiah(53, 1, "D"), isaiah(53, 2, "E")).toStringForCopy("Isaiah")
         )
+    }
+
+    @Test
+    fun `test toStringForCopy gives each parallel translation the same kind of reference`() {
+        val verse = Verse(VerseIndex(42, 0, 15), Verse.Text("engwebu", "A"), listOf(Verse.Text("kjv", "B")))
+        assertEquals("John 1:16 WEBU\n> A\nJohn 1:16 KJV\n> B\n\n", listOf(verse).toStringForCopy("John"))
     }
 
     @Test
     fun `test toStringForCopy isolates the chapter and reference in right to left text`() {
         fun matthew(chapter: Int, verse: Int, text: String) = Verse(VerseIndex(39, chapter - 1, verse - 1), Verse.Text("T", text), emptyList())
         assertEquals(
-                "Matthew \u20661:25-2:1\u2069 (Arabic)\n> 25 \u0628\u0635\u062D \u00B6\u20662:1\u2069 \u0628\u0639\u062F",
-                listOf(matthew(1, 25, "\u0628\u0635\u062D"), matthew(2, 1, "\u0628\u0639\u062F")).toStringForCopy("Matthew", "Arabic")
-        )
-    }
-
-    @Test
-    fun `test toStringForSharing keeps the plain format without the translation name`() {
-        assertEquals(
-                "John 1:16-17\n16 A 17 B",
-                listOf(verse(15, "A"), verse(16, "B")).toStringForSharing("John")
+                "Matthew \u20661:25-2:1\u2069 T\n> 25 \u0628\u0635\u062D \u00B6\u20662:1\u2069 \u0628\u0639\u062F\n\n",
+                listOf(matthew(1, 25, "\u0628\u0635\u062D"), matthew(2, 1, "\u0628\u0639\u062F")).toStringForCopy("Matthew")
         )
     }
 
@@ -190,82 +199,32 @@ class VerseTransformerTest : BaseUnitTest() {
     }
 
 
+    private val book = MockContents.kjvBookNames[0]
+    private val kjv = MockContents.kjvShortName.uppercase()
+    private val cuv = MockContents.cuvShortName.uppercase()
+    private fun kjvText(i: Int) = MockContents.kjvVerses[i].text.text
+    private fun cuvText(i: Int) = MockContents.cuvVerses[i].text.text
+
     @Test
-    fun testVerseToStringForSharing() {
+    fun testVersesToStringForCopy() {
+        assertEquals("$book 1:1 $kjv\n> ${kjvText(0)}\n\n", MockContents.kjvVerses[0].toStringForCopy(book))
+        // random order is sorted, and runs of consecutive verses are grouped
         assertEquals(
-                "${MockContents.kjvBookNames[0]} 1:1 ${MockContents.kjvVerses[0].text.text}",
-                MockContents.kjvVerses[0].toStringForSharing(MockContents.kjvBookNames[0])
+                "$book 1:1-2 $kjv\n> 1 ${kjvText(0)} 2 ${kjvText(1)}\n\n$book 1:10 $kjv\n> ${kjvText(9)}\n\n",
+                listOf(MockContents.kjvVerses[9], MockContents.kjvVerses[0], MockContents.kjvVerses[1]).toStringForCopy(book)
         )
     }
 
     @Test
-    fun testVerseWithParallelTranslationsToStringForSharing() {
+    fun testVersesWithParallelTranslationsToStringForCopy() {
+        val parallel = MockContents.kjvVersesWithCuvParallel
         assertEquals(
-                "${MockContents.kjvBookNames[0]} 1:1\n" +
-                        "${MockContents.kjvShortName}: ${MockContents.kjvVerses[0].text.text}\n" +
-                        "${MockContents.cuvShortName}: ${MockContents.cuvVerses[0].text.text}",
-                MockContents.kjvVersesWithCuvParallel[0].toStringForSharing(MockContents.kjvBookNames[0])
+                "$book 1:1 $kjv\n> ${kjvText(0)}\n$book 1:1 $cuv\n> ${cuvText(0)}\n\n",
+                parallel[0].toStringForCopy(book)
         )
-    }
-
-    @Test
-    fun testVersesToStringForSharing() {
-        // single verse
         assertEquals(
-                "${MockContents.kjvBookNames[0]} 1:1 ${MockContents.kjvVerses[0].text.text}",
-                listOf(MockContents.kjvVerses[0]).toStringForSharing(MockContents.kjvBookNames[0])
-        )
-
-        // multiple verses
-        assertEquals(
-                "${MockContents.kjvBookNames[0]} 1:1-2\n" +
-                        "1 ${MockContents.kjvVerses[0].text.text} 2 ${MockContents.kjvVerses[1].text.text}\n\n" +
-                        "${MockContents.kjvBookNames[0]} 1:10\n" +
-                        MockContents.kjvVerses[9].text.text,
-                listOf(MockContents.kjvVerses[0], MockContents.kjvVerses[1], MockContents.kjvVerses[9])
-                        .toStringForSharing(MockContents.kjvBookNames[0])
-        )
-    }
-
-    @Test
-    fun testVersesWithParallelTranslationsToStringForSharing() {
-        // single verse
-        assertEquals(
-                "${MockContents.kjvBookNames[0]} 1:1\n" +
-                        "${MockContents.kjvShortName}: ${MockContents.kjvVerses[0].text.text}\n" +
-                        "${MockContents.cuvShortName}: ${MockContents.cuvVerses[0].text.text}",
-                listOf(MockContents.kjvVersesWithCuvParallel[0]).toStringForSharing(MockContents.kjvBookNames[0])
-        )
-
-        // multiple verses
-        assertEquals(
-                "${MockContents.kjvBookNames[0]} 1:1-2\n" +
-                        "${MockContents.kjvShortName}: 1 ${MockContents.kjvVerses[0].text.text} 2 ${MockContents.kjvVerses[1].text.text}\n" +
-                        "${MockContents.cuvShortName}: 1 ${MockContents.cuvVerses[0].text.text} 2 ${MockContents.cuvVerses[1].text.text}",
-                listOf(MockContents.kjvVersesWithCuvParallel[0], MockContents.kjvVersesWithCuvParallel[1])
-                        .toStringForSharing(MockContents.kjvBookNames[0])
-        )
-    }
-
-    @Test
-    fun testVersesWithRandomOrderToStringForSharing() {
-        // without parallel
-        assertEquals(
-                "${MockContents.kjvBookNames[0]} 1:1-2\n" +
-                        "1 ${MockContents.kjvVerses[0].text.text} 2 ${MockContents.kjvVerses[1].text.text}\n\n" +
-                        "${MockContents.kjvBookNames[0]} 1:10\n" +
-                        MockContents.kjvVerses[9].text.text,
-                listOf(MockContents.kjvVerses[0], MockContents.kjvVerses[9], MockContents.kjvVerses[1])
-                        .toStringForSharing(MockContents.kjvBookNames[0])
-        )
-
-        // with parallel
-        assertEquals(
-                "${MockContents.kjvBookNames[0]} 1:1-2\n" +
-                        "${MockContents.kjvShortName}: 1 ${MockContents.kjvVerses[0].text.text} 2 ${MockContents.kjvVerses[1].text.text}\n" +
-                        "${MockContents.cuvShortName}: 1 ${MockContents.cuvVerses[0].text.text} 2 ${MockContents.cuvVerses[1].text.text}",
-                listOf(MockContents.kjvVersesWithCuvParallel[1], MockContents.kjvVersesWithCuvParallel[0])
-                        .toStringForSharing(MockContents.kjvBookNames[0])
+                "$book 1:1-2 $kjv\n> 1 ${kjvText(0)} 2 ${kjvText(1)}\n$book 1:1-2 $cuv\n> 1 ${cuvText(0)} 2 ${cuvText(1)}\n\n",
+                listOf(parallel[1], parallel[0]).toStringForCopy(book)
         )
     }
 }

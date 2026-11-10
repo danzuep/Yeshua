@@ -19,7 +19,9 @@ package com.github.danzuep.yeshua.android.infra
 
 import android.content.Context
 import android.content.res.Configuration
+import android.os.Build
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.annotation.CallSuper
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -64,6 +66,7 @@ abstract class BaseActivity<VB : ViewBinding, ViewAction, ViewState, VM : BaseVi
         Logger.withTag(tag).i { "onCreate()" }
 
         setContentView(viewBinding.root)
+        extendIntoDisplayCutout()
         // Edge-to-edge is enforced on Android 15+, so keep content out of the status bar and cutout.
         ViewCompat.setOnApplyWindowInsetsListener(viewBinding.root) { view, insets ->
             val bars = insets.getInsets(
@@ -76,6 +79,14 @@ abstract class BaseActivity<VB : ViewBinding, ViewAction, ViewState, VM : BaseVi
 
         viewModel.viewAction().onEach(::onViewActionEmitted).launchIn(lifecycleScope)
         viewModel.viewState().onEach(::onViewStateUpdated).launchIn(lifecycleScope)
+    }
+
+    private fun extendIntoDisplayCutout() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            window.attributes = window.attributes.apply {
+                layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+            }
+        }
     }
 
     @CallSuper
