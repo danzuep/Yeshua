@@ -47,6 +47,7 @@ class ReadingToolbarFragment : BaseFragment<FragmentReadingToolbarBinding, Readi
                 is ReadingToolbar.ViewEvent.OpenCopyright -> startActivity(
                     Intent(Intent.ACTION_VIEW, Uri.parse("https://ebible.org/${viewEvent.translationShortName}/copr.htm"))
                 )
+                is ReadingToolbar.ViewEvent.OpenTimeline -> navigator.navigate(requireActivity(), Navigator.SCREEN_TIMELINE)
                 is ReadingToolbar.ViewEvent.OpenBookmarks -> navigator.navigate(requireActivity(), Navigator.SCREEN_BOOKMARKS)
                 is ReadingToolbar.ViewEvent.OpenHighlights -> navigator.navigate(requireActivity(), Navigator.SCREEN_HIGHLIGHTS)
                 is ReadingToolbar.ViewEvent.OpenNotes -> navigator.navigate(requireActivity(), Navigator.SCREEN_NOTES)

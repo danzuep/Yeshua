@@ -61,6 +61,7 @@ class ReadingToolbarTest : BaseUnitTest() {
         readingToolbar.initialize { viewEvent ->
             when (viewEvent) {
                 is ReadingToolbar.ViewEvent.OpenBookmarks -> openBookmarksCalled++
+                is ReadingToolbar.ViewEvent.OpenTimeline -> Unit
                 is ReadingToolbar.ViewEvent.OpenCopyright -> fail()
                 is ReadingToolbar.ViewEvent.OpenHighlights -> openHighlightsCalled++
                 is ReadingToolbar.ViewEvent.OpenNotes -> openNotesCalled++
@@ -158,6 +159,7 @@ class ReadingToolbarTest : BaseUnitTest() {
         readingToolbar.initialize { viewEvent ->
             when (viewEvent) {
                 is ReadingToolbar.ViewEvent.OpenBookmarks -> fail()
+                is ReadingToolbar.ViewEvent.OpenTimeline -> fail()
                 is ReadingToolbar.ViewEvent.OpenCopyright -> fail()
                 is ReadingToolbar.ViewEvent.OpenHighlights -> fail()
                 is ReadingToolbar.ViewEvent.OpenNotes -> fail()

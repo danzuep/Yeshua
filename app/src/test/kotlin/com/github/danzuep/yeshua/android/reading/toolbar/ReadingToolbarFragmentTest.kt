@@ -74,6 +74,7 @@ class ReadingToolbarFragmentTest : BaseFragmentTest() {
         `verify toolbar ViewEvent`(R.id.action_reading_progress, Navigator.SCREEN_READING_PROGRESS)
         `verify toolbar ViewEvent`(R.id.action_search, Navigator.SCREEN_SEARCH)
         `verify toolbar ViewEvent`(R.id.action_settings, Navigator.SCREEN_SETTINGS)
+        `verify toolbar ViewEvent`(R.id.action_timeline, Navigator.SCREEN_TIMELINE)
     }
 
     private fun `verify toolbar ViewEvent`(@IdRes menuItemId: Int, @Navigator.Companion.Screen screen: Int) {
