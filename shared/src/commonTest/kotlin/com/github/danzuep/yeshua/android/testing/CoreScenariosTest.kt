@@ -66,6 +66,12 @@ class CoreScenariosTest {
         var parallel = emptyList<String>()
         override suspend fun readCurrentVerseIndex() = verseIndex
         override suspend fun saveCurrentVerseIndex(verseIndex: VerseIndex) { this.verseIndex = verseIndex }
+        var timeline = emptyList<VerseIndex>()
+        var timelineLimit = 10
+        override suspend fun readTimeline() = timeline
+        override suspend fun saveTimeline(timeline: List<VerseIndex>) { this.timeline = timeline }
+        override suspend fun readTimelineLimit() = timelineLimit
+        override suspend fun saveTimelineLimit(limit: Int) { timelineLimit = limit }
         override suspend fun readCurrentTranslation() = translation
         override suspend fun saveCurrentTranslation(translationShortName: String) { translation = translationShortName }
         override suspend fun readParallelTranslations() = parallel
