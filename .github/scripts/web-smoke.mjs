@@ -40,8 +40,7 @@ try {
 
   await page.selectOption('#chapter', { value: '2' });
   await page.waitForFunction(() => document.title.endsWith('3 · Yeshua'));
-  await page.locator('#text section[data-chapter="3"]').scrollIntoViewIfNeeded();
-  await page.evaluate(() => document.querySelector('#text section[data-chapter="3"]').scrollIntoView());
+  await page.evaluate(() => document.querySelector('#text section[data-book="42"][data-chapter="3"]').scrollIntoView());
   await page.waitForFunction(() => document.title.endsWith('4 · Yeshua'));
 
   assert.ok((await page.locator('#text section').count()) >= 3, 'neighbouring chapters are loaded for infinite scroll');
