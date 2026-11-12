@@ -27,7 +27,7 @@ try {
   await page.waitForSelector('#text .verse');
   assert.equal(await page.locator('#book option:checked').textContent(), 'John');
 
-  await page.selectOption('#chapter', '2');
+  await page.selectOption('#chapter', { value: '2' });
   await page.waitForFunction(() => document.title.includes('John 3'));
   await page.click('#next');
   await page.waitForFunction(() => document.title.includes('John 4'));
