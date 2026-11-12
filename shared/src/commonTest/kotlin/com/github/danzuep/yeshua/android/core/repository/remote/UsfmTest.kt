@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-package com.github.danzuep.yeshua.android.core.repository.remote.android
+package com.github.danzuep.yeshua.android.core.repository.remote
 
 import com.github.danzuep.yeshua.android.core.RUBY_MARK
 import com.github.danzuep.yeshua.android.core.RUBY_SEPARATOR
-import com.github.danzuep.yeshua.android.core.repository.remote.parseUsfm
-import com.github.danzuep.yeshua.android.core.repository.remote.stripUsfmMarkup
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

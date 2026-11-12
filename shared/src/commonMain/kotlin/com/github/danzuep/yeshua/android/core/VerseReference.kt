@@ -95,7 +95,7 @@ fun String.findVerseReferences(bookNames: List<String>, defaultBookIndex: Int): 
         while (true) {
             val next = CONTINUATION_REGEX.find(substring(end)) ?: break
             val number = next.groups[1]!!
-            val numberStart = end + number.range.first
+            val numberStart = end + next.value.indexOf(number.value)
             end += next.range.last + 1
             if (chapterIsValid && number.value.toInt() > 0) {
                 val first = number.value.toInt() - 1

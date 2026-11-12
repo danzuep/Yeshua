@@ -75,4 +75,11 @@ class RubyTest {
         val text = "${HEADING}${ruby("神", "かみ")}の愛${HEADING}Text"
         assertEquals(listOf("神の愛"), text.extractHeadings())
     }
+
+    @Test
+    fun toDisplayedText_keepsRubyOnlyWhenOn() {
+        val text = "${PARAGRAPH}${ruby("神", "かみ")}の愛"
+        assertEquals("神の愛", text.toDisplayedText())
+        assertEquals(text.removePrefix("$PARAGRAPH"), text.toDisplayedText(rubyOn = true))
+    }
 }

@@ -22,22 +22,19 @@ import com.github.danzuep.yeshua.android.core.PARAGRAPH
 import com.github.danzuep.yeshua.android.core.RUBY_MARK
 import com.github.danzuep.yeshua.android.core.RUBY_SEPARATOR
 import com.github.danzuep.yeshua.android.core.removeRuby
-import java.io.InputStream
-import java.util.TreeMap
-import java.util.zip.ZipInputStream
 
 /** Protestant canon in the app's order (0-based book index = position in this list). */
-internal val BOOK_CODES: List<String> = ("GEN EXO LEV NUM DEU JOS JDG RUT 1SA 2SA 1KI 2KI 1CH 2CH EZR NEH EST JOB PSA PRO ECC SNG ISA JER LAM " +
+val BOOK_CODES: List<String> = ("GEN EXO LEV NUM DEU JOS JDG RUT 1SA 2SA 1KI 2KI 1CH 2CH EZR NEH EST JOB PSA PRO ECC SNG ISA JER LAM " +
         "EZK DAN HOS JOL AMO OBA JON MIC NAM HAB ZEP HAG ZEC MAL MAT MRK LUK JHN ACT ROM 1CO 2CO GAL EPH PHP COL " +
         "1TH 2TH 1TI 2TI TIT PHM HEB JAS 1PE 2PE 1JN 2JN 3JN JUD REV").split(" ")
 
 /** A book of scripture, independent of the markup (USFM, USX, ...) it was read from. Verse numbers are 1-based. */
 class ScriptureBook(val code: String, val name: String?, val chapters: Map<Int, Map<Int, String>>)
 
-private val NOTE = Regex("""\\(f|fe|x|ef|ex)\b.*?\\\1\*""", RegexOption.DOT_MATCHES_ALL)
+private val NOTE = Regex("""\\(f|fe|x|ef|ex)\b[\s\S]*?\\\1\*""")
 private val NOTE_CALLER = Regex("""^\s*[^\s\\]*\s*""")
 private val WORD_ATTRIBUTES = Regex("""\|[^\\]*?(?=\\\+?w\*)""")
-private val RUBY = Regex("""\\rb\s+(.*?)(?:\|([^\\]*))?\\rb\*""", RegexOption.DOT_MATCHES_ALL)
+private val RUBY = Regex("""\\rb\s+([\s\S]*?)(?:\|([^\\]*))?\\rb\*""")
 private val ATTRIBUTE = Regex("""\w+="[^"]*"(?:\s+\w+="[^"]*")*""")
 private val MARKER = Regex("""\\\+?[a-z0-9-]+\*|\\\+?[a-z0-9-]+\s?""")
 private val WHITESPACE = Regex("""\s+""")
@@ -45,7 +42,7 @@ private val VERSE = Regex("""\\v\s+(\d+)(?:-(\d+))?[a-z]?\s*""")
 private val NON_SCRIPTURE = Regex("""^\\(?:ms\d?|mr|s\d?|sr|r|d|sp|cl|cd|cp|qa|rem|h|toc\d|mt\d?|imt\d?|is\d?|ip|id|b)\b""")
 
 /** Strips word attributes and markers, keeping the scripture text. Ruby (\rb base|reading\rb*) becomes [RUBY_MARK]ed text. Notes become [NOTE_MARK]ed footnotes or cross-references. */
-internal fun stripUsfmMarkup(text: String): String =
+fun stripUsfmMarkup(text: String): String =
         text.replace(NOTE) { noteMarkup(it) }.removeMarkers()
 
 private fun String.removeMarkers(): String =
@@ -76,10 +73,10 @@ private val POETRY_LINE = Regex("""^\\q(\d?)(?:\s+(.*))?$""")
  * Parses USFM into verses that keep their structure, see [PARAGRAPH] and [HEADING]: paragraph markers, section
  * headings and poetry lines are stored in the verse text, which readers that don't care remove with `stripStructure()`.
  */
-internal fun parseUsfm(content: String): ScriptureBook {
+fun parseUsfm(content: String): ScriptureBook {
     var code: String? = null
     var name: String? = null
-    val chapters = TreeMap<Int, MutableMap<Int, String>>()
+    val chapters = mutableMapOf<Int, MutableMap<Int, String>>()
     var chapter = 0
     var verse = -1
     // The break and heading that go in front of the next text.
@@ -99,7 +96,7 @@ internal fun parseUsfm(content: String): ScriptureBook {
                 chapter = line.split(WHITESPACE)[1].toInt()
                 verse = -1
                 pendingBreak = ""
-                chapters.getOrPut(chapter) { TreeMap() }
+                chapters.getOrPut(chapter) { mutableMapOf() }
                 continue
             }
         }
@@ -154,16 +151,14 @@ internal fun parseUsfm(content: String): ScriptureBook {
     return ScriptureBook(requireNotNull(code) { "Missing \\id marker" }, name, chapters)
 }
 
-/** Reads a USFM zip (as published by eBible.org) into the books of the 66 book canon, keyed by USFM code. */
-internal fun readUsfmZip(input: InputStream): Map<String, ScriptureBook> {
+/** Reads the USFM books out of the (file name, bytes) entries of a zip as published by eBible.org, keyed by USFM code. Only books of the 66 book canon are kept. */
+fun readUsfmBooks(entries: Sequence<Pair<String, ByteArray>>): Map<String, ScriptureBook> {
     val books = hashMapOf<String, ScriptureBook>()
-    ZipInputStream(input).use { zip ->
-        generateSequence { zip.nextEntry }.forEach { entry ->
-            val entryName = entry.name.lowercase()
-            if (!entry.isDirectory && (entryName.endsWith(".usfm") || entryName.endsWith(".sfm"))) {
-                val book = parseUsfm(zip.readBytes().toString(Charsets.UTF_8))
-                if (book.code in BOOK_CODES) books[book.code] = book
-            }
+    for ((name, content) in entries) {
+        val lowercaseName = name.lowercase()
+        if (lowercaseName.endsWith(".usfm") || lowercaseName.endsWith(".sfm")) {
+            val book = parseUsfm(content.decodeToString())
+            if (book.code in BOOK_CODES) books[book.code] = book
         }
     }
     return books
@@ -174,7 +169,7 @@ internal fun readUsfmZip(input: InputStream): Map<String, ScriptureBook> {
  * translations) are left empty. Verses missing inside a chapter (e.g. omitted by a critical text) become empty strings
  * to keep the numbering aligned.
  */
-internal fun toRemoteTranslation(translationInfo: RemoteTranslationInfo, books: Map<String, ScriptureBook>): RemoteTranslation {
+fun toRemoteTranslation(translationInfo: RemoteTranslationInfo, books: Map<String, ScriptureBook>): RemoteTranslation {
     require(books.isNotEmpty()) { "No books found for ${translationInfo.shortName}" }
 
     val bookNames = BOOK_CODES.map { code -> books[code]?.name ?: code }

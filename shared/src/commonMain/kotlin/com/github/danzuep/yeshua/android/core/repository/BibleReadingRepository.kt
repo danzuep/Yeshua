@@ -17,7 +17,8 @@
 
 package com.github.danzuep.yeshua.android.core.repository
 
-import androidx.collection.LruCache
+import com.github.danzuep.yeshua.android.utils.LruCache
+import com.github.danzuep.yeshua.android.utils.maxCacheBytes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,7 +35,7 @@ import co.touchlab.kermit.Logger
 
 class BibleReadingRepository(private val localReadingStorage: LocalReadingStorage, appScope: CoroutineScope) {
     companion object {
-        private val TAG = BibleReadingRepository::class.java.simpleName
+        private val TAG = "BibleReadingRepository"
     }
 
     private val cache: BibleReadingCache = BibleReadingCache()
@@ -175,12 +176,12 @@ private class LruStringCache(maxSize: Int) : LruCache<String, List<String>>(maxS
 private class LruVerseCache(maxSize: Int) : LruCache<String, List<Verse>>(maxSize) {
     // each Verse contains 3 integers and 2 strings (we don't cache parallel translations yet)
     // strings are UTF-16 encoded (with a length of one or two 16-bit code units)
-    override fun sizeOf(key: String, verses: List<Verse>): Int =
-            key.length * 4 + verses.sumOf { 12 + (it.text.translationShortName.length + it.text.text.length) * 4 }
+    override fun sizeOf(key: String, value: List<Verse>): Int =
+            key.length * 4 + value.sumOf { 12 + (it.text.translationShortName.length + it.text.text.length) * 4 }
 }
 
 private class BibleReadingCache {
-    private val maxMemory = Runtime.getRuntime().maxMemory()
+    private val maxMemory = maxCacheBytes()
     private val bookNamesCache: LruStringCache = LruStringCache((maxMemory / 16L).toInt())
     private val bookShortNamesCache: LruStringCache = LruStringCache((maxMemory / 16L).toInt())
     private val versesCache: LruVerseCache = LruVerseCache((maxMemory / 8L).toInt())

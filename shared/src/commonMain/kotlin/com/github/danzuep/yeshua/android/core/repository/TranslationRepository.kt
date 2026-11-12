@@ -17,7 +17,7 @@
 
 package com.github.danzuep.yeshua.android.core.repository
 
-import androidx.annotation.VisibleForTesting
+import com.github.danzuep.yeshua.android.utils.VisibleForTesting
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
@@ -28,22 +28,23 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import com.github.danzuep.yeshua.android.core.TranslationInfo
-import com.github.danzuep.yeshua.android.core.provider.TimeProvider
+import com.github.danzuep.yeshua.android.core.provider.TimeSource
 import com.github.danzuep.yeshua.android.core.repository.local.LocalTranslationStorage
 import com.github.danzuep.yeshua.android.core.repository.remote.RemoteTranslationInfo
 import com.github.danzuep.yeshua.android.core.repository.remote.RemoteTranslationService
 import com.github.danzuep.yeshua.android.core.repository.remote.DEFAULT_DOWNLOAD_SITE
 import co.touchlab.kermit.Logger
-import java.io.IOException
+import com.github.danzuep.yeshua.android.utils.IOException
+import com.github.danzuep.yeshua.android.utils.synchronizedBlock
 
 class TranslationRepository(
     private val localTranslationStorage: LocalTranslationStorage,
     private val remoteTranslationService: RemoteTranslationService,
-    private val timeProvider: TimeProvider,
+    private val timeSource: TimeSource,
     appScope: CoroutineScope
 ) {
     companion object {
-        private val TAG: String = TranslationRepository::class.java.simpleName
+        private val TAG: String = "TranslationRepository"
 
         @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
         const val TRANSLATION_LIST_REFRESH_INTERVAL_IN_MILLIS = 7L * 24L * 3600L * 1000L // 7 day
@@ -101,7 +102,7 @@ class TranslationRepository(
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     fun updateTranslations(updatedTranslations: List<TranslationInfo>) {
-        val (available, downloaded) = synchronized(translationsLock) {
+        val (available, downloaded) = synchronizedBlock(translationsLock) {
             val available = mutableMapOf<String, TranslationInfo>()
             val downloaded = mutableMapOf<String, TranslationInfo>()
             updatedTranslations.forEach { t ->
@@ -111,7 +112,7 @@ class TranslationRepository(
                     available[t.shortName] = t
                 }
             }
-            return@synchronized Pair(available, downloaded)
+            return@synchronizedBlock Pair(available, downloaded)
         }
         notifyTranslationsUpdated(available.values.toList(), downloaded.values.toList())
     }
@@ -140,7 +141,7 @@ class TranslationRepository(
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     suspend fun translationListTooOld(): Boolean =
-        timeProvider.currentTimeMillis - localTranslationStorage.readTranslationListRefreshTimestamp() >= TRANSLATION_LIST_REFRESH_INTERVAL_IN_MILLIS
+        timeSource.currentTimeMillis - localTranslationStorage.readTranslationListRefreshTimestamp() >= TRANSLATION_LIST_REFRESH_INTERVAL_IN_MILLIS
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     suspend fun readTranslationsFromBackend(): List<TranslationInfo> {
@@ -170,7 +171,7 @@ class TranslationRepository(
 
         try {
             if (translations.isNotEmpty()) {
-                localTranslationStorage.saveTranslationListRefreshTimestamp(timeProvider.currentTimeMillis)
+                localTranslationStorage.saveTranslationListRefreshTimestamp(timeSource.currentTimeMillis)
             }
         } catch (e: Exception) {
             Logger.e(e) { "Failed to save translation list refresh timestamp" }
@@ -200,7 +201,7 @@ class TranslationRepository(
     }
 
     private fun markAsDownloaded(translationInfo: TranslationInfo) {
-        val (available, downloaded) = synchronized(translationsLock) {
+        val (available, downloaded) = synchronizedBlock(translationsLock) {
             val available = mutableListOf<TranslationInfo>().apply {
                 _availableTranslations.value?.let { addAll(it) }
                 removeAll { it.shortName == translationInfo.shortName }
@@ -212,7 +213,7 @@ class TranslationRepository(
                 add(translationInfo.copy(downloaded = true))
             }
 
-            return@synchronized Pair(available, downloaded)
+            return@synchronizedBlock Pair(available, downloaded)
         }
         notifyTranslationsUpdated(available, downloaded)
     }
@@ -250,7 +251,7 @@ class TranslationRepository(
         remoteTranslationService.removeTranslationCache(RemoteTranslationInfo.fromTranslationInfo(translationInfo))
         Logger.withTag(TAG).i { "Translation removed" }
 
-        val (available, downloaded) = synchronized(translationsLock) {
+        val (available, downloaded) = synchronizedBlock(translationsLock) {
             var removed = false
             val downloaded = mutableListOf<TranslationInfo>().apply {
                 _downloadedTranslations.value?.let { addAll(it) }
@@ -264,7 +265,7 @@ class TranslationRepository(
                 }
             }
 
-            return@synchronized Pair(available, downloaded)
+            return@synchronizedBlock Pair(available, downloaded)
         }
         notifyTranslationsUpdated(available, downloaded)
     }
