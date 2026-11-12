@@ -29,6 +29,7 @@ import kotlinx.browser.window
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.await
 import kotlinx.coroutines.launch
+import org.w3c.dom.Element
 import org.w3c.dom.HTMLButtonElement
 import org.w3c.dom.HTMLDivElement
 import org.w3c.dom.HTMLInputElement
@@ -241,7 +242,7 @@ private class Reader(private val translations: List<RemoteTranslationInfo>) {
         localStorage.setItem(KEY_FONT, fontSize.toString())
     }
 
-    private fun HTMLElement.appendRubyText(content: String) {
+    private fun Element.appendRubyText(content: String) {
         content.toRubyParts().forEach { part ->
             if (part.reading.isNullOrEmpty()) {
                 appendChild(document.createTextNode(part.text))
