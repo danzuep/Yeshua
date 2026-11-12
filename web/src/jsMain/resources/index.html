@@ -7,20 +7,19 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header>
+<header id="toolbar">
     <h1>Yeshua</h1>
     <select id="translation" aria-label="Translation"></select>
     <select id="book" aria-label="Book"></select>
     <select id="chapter" aria-label="Chapter"></select>
     <label id="ruby-label" hidden><input id="ruby" type="checkbox" checked> Ruby</label>
+    <button id="font-smaller" type="button" aria-label="Smaller text">A&minus;</button>
+    <button id="font-larger" type="button" aria-label="Larger text">A+</button>
+    <button id="theme" type="button" aria-label="Toggle night mode"></button>
 </header>
 <main>
     <div id="status" role="status">Loading…</div>
     <article id="text"></article>
-    <nav>
-        <button id="previous" type="button">&larr; Previous</button>
-        <button id="next" type="button">Next &rarr;</button>
-    </nav>
 </main>
 <script src="yeshua.js"></script>
 </body>

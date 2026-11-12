@@ -4,7 +4,7 @@ The `web` module builds a static reader (reading and switching translations) tha
 
 - **Reuses the app core.** USFM parsing, the eBible catalog, and the verse structure helpers live in `shared/src/commonMain` and are compiled for Android, the JVM and Kotlin/JS.
 - **Static JSON.** eBible.org doesn't allow cross-origin downloads, so the build converts translations to `translations/<shortName>.json` plus `translations/index.json` (`web/src/jvmMain/.../Convert.kt`, format in `TranslationFiles.kt`).
-- **UI.** `web/src/jsMain` is a small DOM reader. The last translation and chapter are kept in `localStorage`.
+- **UI.** `web/src/jsMain` is a small DOM reader. Chapters load continuously as you scroll (infinite scroll, in both directions) and the toolbar follows the chapter under it. There is a night mode (auto, dark, light) and text size buttons. The last translation, chapter, theme and text size are kept in `localStorage`.
 
 ## Building locally
 

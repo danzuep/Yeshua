@@ -39,6 +39,11 @@ private const val KEY_TRANSLATION = "translation"
 private const val KEY_BOOK = "book"
 private const val KEY_CHAPTER = "chapter"
 private const val KEY_RUBY = "ruby"
+private const val KEY_THEME = "theme"
+private const val KEY_FONT = "font"
+
+/** Pixels from an edge at which the next chapter is loaded. */
+private const val LOAD_DISTANCE = 1200
 
 private fun <T> element(id: String): T = document.getElementById(id).unsafeCast<T>()
 
@@ -54,8 +59,7 @@ private class Reader(private val translations: List<RemoteTranslationInfo>) {
     private val chapterSelect = element<HTMLSelectElement>("chapter")
     private val rubyToggle = element<HTMLInputElement>("ruby")
     private val rubyLabel = element<HTMLElement>("ruby-label")
-    private val previous = element<HTMLButtonElement>("previous")
-    private val next = element<HTMLButtonElement>("next")
+    private val themeButton = element<HTMLButtonElement>("theme")
     private val text = element<HTMLDivElement>("text")
     private val status = element<HTMLElement>("status")
     private val loaded = HashMap<String, RemoteTranslation>()
@@ -63,6 +67,8 @@ private class Reader(private val translations: List<RemoteTranslationInfo>) {
     private lateinit var translation: RemoteTranslation
     private var book = 0
     private var chapter = 0
+    private var fontSize = 100
+    private var scrollQueued = false
 
     /** Chapters (0-based) that have verses, by book. */
     private val chapters get() = translation.verses.keys.groupBy({ it.first }, { it.second }).mapValues { it.value.sorted() }
@@ -75,6 +81,8 @@ private class Reader(private val translations: List<RemoteTranslationInfo>) {
         book = localStorage.getItem(KEY_BOOK)?.toIntOrNull() ?: JOHN
         chapter = localStorage.getItem(KEY_CHAPTER)?.toIntOrNull() ?: 0
         rubyToggle.checked = localStorage.getItem(KEY_RUBY) != "false"
+        applyTheme(localStorage.getItem(KEY_THEME) ?: "auto")
+        applyFontSize(localStorage.getItem(KEY_FONT)?.toIntOrNull() ?: 100)
         showTranslation(info.shortName)
 
         translationSelect.onchange = { launch { showTranslation(translationSelect.value) } }
@@ -82,10 +90,19 @@ private class Reader(private val translations: List<RemoteTranslationInfo>) {
         chapterSelect.onchange = { select(book, chapterSelect.value.toInt()) }
         rubyToggle.onchange = {
             localStorage.setItem(KEY_RUBY, rubyToggle.checked.toString())
-            render()
+            select(book, chapter)
         }
-        previous.onclick = { step(-1) }
-        next.onclick = { step(1) }
+        themeButton.onclick = {
+            applyTheme(when (localStorage.getItem(KEY_THEME) ?: "auto") { "auto" -> "dark"; "dark" -> "light"; else -> "auto" })
+        }
+        element<HTMLButtonElement>("font-smaller").onclick = { applyFontSize(fontSize - 10) }
+        element<HTMLButtonElement>("font-larger").onclick = { applyFontSize(fontSize + 10) }
+        window.addEventListener("scroll", {
+            if (!scrollQueued) {
+                scrollQueued = true
+                window.requestAnimationFrame { scrollQueued = false; fill() }
+            }
+        })
     }
 
     private fun launch(block: suspend () -> Unit) = MainScope().launch {
@@ -112,46 +129,89 @@ private class Reader(private val translations: List<RemoteTranslationInfo>) {
         select(book, chapter)
     }
 
+    /** Every chapter with verses, in reading order. */
+    private val order get() = translation.verses.keys.sortedWith(compareBy({ it.first }, { it.second }))
+
+    /** Jumps to a chapter, replacing everything shown. */
     private fun select(newBook: Int, newChapter: Int) {
+        val bookChapters = chapters.getValue(newBook)
+        val target = Pair(newBook, newChapter.takeIf { it in bookChapters } ?: bookChapters.first())
+        text.innerHTML = ""
+        chapterSelect.innerHTML = ""
+        text.appendChild(renderChapter(target.first, target.second))
+        setCurrent(target.first, target.second)
+        window.scrollTo(0.0, 0.0)
+        fill()
+    }
+
+    private fun setCurrent(newBook: Int, newChapter: Int) {
+        val bookChanged = newBook != book || chapterSelect.options.length == 0
         book = newBook
-        val bookChapters = chapters.getValue(book)
-        chapter = newChapter.takeIf { it in bookChapters } ?: bookChapters.first()
+        chapter = newChapter
         localStorage.setItem(KEY_BOOK, book.toString())
         localStorage.setItem(KEY_CHAPTER, chapter.toString())
-
-        bookSelect.value = book.toString()
-        chapterSelect.innerHTML = ""
-        chapterSelect.append(*bookChapters.map { option(it.toString(), (it + 1).toString()) }.toTypedArray())
-        chapterSelect.value = chapter.toString()
-        render()
-    }
-
-    private fun step(direction: Int) {
-        val books = chapters.keys.sorted()
-        val bookChapters = chapters.getValue(book)
-        val index = bookChapters.indexOf(chapter) + direction
-        when {
-            index in bookChapters.indices -> select(book, bookChapters[index])
-            direction < 0 && book != books.first() -> books[books.indexOf(book) - 1].let { select(it, chapters.getValue(it).last()) }
-            direction > 0 && book != books.last() -> select(books[books.indexOf(book) + 1], 0)
-        }
-        window.scrollTo(0.0, 0.0)
-    }
-
-    private fun render() {
-        text.innerHTML = ""
         document.title = "${translation.bookNames[book]} ${chapter + 1} · Yeshua"
-        var paragraph = newParagraph()
-        translation.verses.getValue(Pair(book, chapter)).forEachIndexed { index, verse ->
+        bookSelect.value = book.toString()
+        if (bookChanged) {
+            chapterSelect.innerHTML = ""
+            chapterSelect.append(*chapters.getValue(book).map { option(it.toString(), (it + 1).toString()) }.toTypedArray())
+        }
+        chapterSelect.value = chapter.toString()
+    }
+
+    private fun sections() = (0 until text.children.length).map { text.children.item(it).unsafeCast<HTMLElement>() }
+
+    private fun key(section: HTMLElement) =
+        Pair(section.getAttribute("data-book")!!.toInt(), section.getAttribute("data-chapter")!!.toInt())
+
+    /** Loads chapters above and below as the reader nears the edges (infinite scroll). */
+    private fun fill() {
+        val chapters = order
+        val root = document.documentElement!!
+        while (true) {
+            val last = key(sections().last())
+            val index = chapters.indexOf(last)
+            if (index == chapters.lastIndex || window.scrollY + window.innerHeight < root.scrollHeight - LOAD_DISTANCE) break
+            val (b, c) = chapters[index + 1]
+            text.appendChild(renderChapter(b, c))
+        }
+        while (window.scrollY < LOAD_DISTANCE) {
+            val index = chapters.indexOf(key(sections().first()))
+            if (index <= 0) break
+            val (b, c) = chapters[index - 1]
+            val before = root.scrollHeight
+            text.insertBefore(renderChapter(b, c), text.firstChild)
+            window.scrollBy(0.0, (root.scrollHeight - before).toDouble())
+        }
+        updateCurrent()
+    }
+
+    /** The chapter under the sticky header is the current one. */
+    private fun updateCurrent() {
+        val line = element<HTMLElement>("toolbar").getBoundingClientRect().bottom + 8
+        val visible = sections().lastOrNull { it.getBoundingClientRect().top <= line } ?: sections().firstOrNull() ?: return
+        val (b, c) = key(visible)
+        if (b != book || c != chapter) setCurrent(b, c)
+    }
+
+    private fun renderChapter(chapterBook: Int, chapterIndex: Int): HTMLElement {
+        val section = document.createElement("section").unsafeCast<HTMLElement>()
+        section.setAttribute("data-book", chapterBook.toString())
+        section.setAttribute("data-chapter", chapterIndex.toString())
+        section.appendChild(document.createElement("h2").apply {
+            textContent = "${translation.bookNames[chapterBook]} ${chapterIndex + 1}"
+        })
+        var paragraph = newParagraph(section)
+        translation.verses.getValue(Pair(chapterBook, chapterIndex)).forEachIndexed { index, verse ->
             if (verse.isEmpty()) return@forEachIndexed
             verse.extractHeadings().forEach { heading ->
-                text.appendChild(document.createElement("h3").apply { textContent = heading })
-                paragraph = newParagraph()
+                section.appendChild(document.createElement("h3").apply { textContent = heading })
+                paragraph = newParagraph(section)
             }
-            if (verse.trimStart().startsWith(PARAGRAPH) && paragraph.hasChildNodes()) paragraph = newParagraph()
+            if (verse.trimStart().startsWith(PARAGRAPH) && paragraph.hasChildNodes()) paragraph = newParagraph(section)
             val lines = verse.toDisplayedText(rubyToggle.checked).split('\n')
             lines.forEachIndexed { line, content ->
-                if (line > 0) paragraph = newParagraph()
+                if (line > 0) paragraph = newParagraph(section)
                 if (line == 0) paragraph.appendChild(document.createElement("sup").apply {
                     className = "verse-number"
                     textContent = (index + 1).toString()
@@ -172,10 +232,25 @@ private class Reader(private val translations: List<RemoteTranslationInfo>) {
                 })
             }
         }
+        return section
     }
 
-    private fun newParagraph(): HTMLElement =
-        document.createElement("p").unsafeCast<HTMLElement>().also { text.appendChild(it) }
+    private fun applyTheme(theme: String) {
+        if (theme == "auto") document.documentElement!!.removeAttribute("data-theme")
+        else document.documentElement!!.setAttribute("data-theme", theme)
+        themeButton.textContent = when (theme) { "dark" -> "🌙"; "light" -> "☀️"; else -> "🌓" }
+        themeButton.title = "Theme: $theme"
+        localStorage.setItem(KEY_THEME, theme)
+    }
+
+    private fun applyFontSize(percent: Int) {
+        fontSize = percent.coerceIn(70, 200)
+        document.documentElement.unsafeCast<HTMLElement>().style.setProperty("font-size", "$fontSize%")
+        localStorage.setItem(KEY_FONT, fontSize.toString())
+    }
+
+    private fun newParagraph(parent: HTMLElement): HTMLElement =
+        document.createElement("p").unsafeCast<HTMLElement>().also { parent.appendChild(it) }
 
     private fun option(value: String, label: String) = document.createElement("option").apply {
         setAttribute("value", value)
