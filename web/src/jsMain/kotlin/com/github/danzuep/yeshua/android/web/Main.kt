@@ -74,6 +74,7 @@ private class Reader(private val translations: List<RemoteTranslationInfo>) {
     private val chapters get() = translation.verses.keys.groupBy({ it.first }, { it.second }).mapValues { it.value.sorted() }
 
     suspend fun start() {
+        window.history.asDynamic().scrollRestoration = "manual"
         val saved = localStorage.getItem(KEY_TRANSLATION)
         val info = translations.firstOrNull { it.shortName == saved } ?: translations.first()
         translationSelect.append(*translations.map { option(it.shortName, it.name) }.toTypedArray())
@@ -186,10 +187,10 @@ private class Reader(private val translations: List<RemoteTranslationInfo>) {
         updateCurrent()
     }
 
-    /** The chapter under the sticky header is the current one. */
+    /** The first chapter ending below the sticky header is the current one. */
     private fun updateCurrent() {
         val line = element<HTMLElement>("toolbar").getBoundingClientRect().bottom + 8
-        val visible = sections().lastOrNull { it.getBoundingClientRect().top <= line } ?: sections().firstOrNull() ?: return
+        val visible = sections().firstOrNull { it.getBoundingClientRect().bottom > line } ?: sections().firstOrNull() ?: return
         val (b, c) = key(visible)
         if (b != book || c != chapter) setCurrent(b, c)
     }
