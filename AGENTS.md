@@ -13,7 +13,7 @@ Don't spend time trying to work around this (no installing the SDK, mirrors or o
 | Goal | How |
 |------|-----|
 | Build and unit tests (`./gradlew testDebugUnitTest assembleDebug`, about 4 min) | Push the branch and open a PR (`gh pr create`). `Android CI` runs only when `app/`, `buildSrc/`, Gradle or workflow files change, and on pushes to `main`. It has no `workflow_dispatch`. |
-| Shared module tests (`./gradlew :shared:jvmTest`, about 1 min) | `Shared tests` workflow, runs when `shared/` or Gradle files change. Tests live in `shared/src/commonTest`. Only the JVM target runs them, so they need no Android SDK. Kotlin-only changes should rely on this job, not `Android CI`. |
+| Shared module tests (`./gradlew :shared:jvmTest`, about 1 min) | `Shared tests` workflow, runs when `shared/` or Gradle files change. Tests live in `shared/src/commonTest`. The JVM and Node (`:shared:jsNodeTest`) targets run them, so they need no Android SDK. Kotlin-only changes should rely on this job, not `Android CI`. |
 | Emulator smoke test of the release APK (about 4-8 min) | `gh workflow run smoke-test.yml --ref <branch>` |
 | Emulator instrumented tests (`app/src/androidTest`, same workflow as the smoke test, separate `instrumented` job) | `gh workflow run smoke-test.yml --ref <branch>`. They run inside the app, so they can seed data with the shared `CoreVerse` builder and read the rendered views, against the minimal John 1-2 and Hebrews 1-2 translation. Artifact: `instrumented-results`. To position the reader, run `CoreReader` on a storage that saves through the app's singleton `BibleReadingRepository` (debug-only `DebugEntryPoints`, see `CoreReaderTest`), because the repository caches the position in memory and ignores writes made through a separate `AndroidDatabase`. |
 | Release APKs (plain and with WEB) | `gh workflow run release.yml --ref <branch>`. This is a dry run unless the ref is a `v*` tag. See [docs/RELEASING.md](docs/RELEASING.md). |
@@ -29,6 +29,7 @@ Before pushing, review Kotlin changes carefully (unresolved references, imports,
   - Feature packages (`reading`, `search`, `translations`, `settings`, `annotated`, `progress`, `preview`) each have an Activity plus a `ViewModel` with a single `ViewState`, one-shot `ViewAction`s and a typed `Error`, on `infra/BaseViewModel` and `infra/BaseActivity`.
   - Strong's Numbers, cross references and the old JSON download flow were removed; translations now come from eBible.org USFM zips, with a redistributable catalog in `app/src/main/assets/translations.csv` refreshed monthly by `update-translation-catalog.yml`.
 - `buildSrc/src/main/kotlin/Configurations.kt` pins plugin and library versions. The app version comes from the release tag (`-PappVersion`), not from this file.
+- `web/` is the GitHub Pages reader (Kotlin/JS) and the USFM-to-JSON converter, built by `pages.yml`; see [docs/WEB.md](docs/WEB.md). The Android-free core (managers, repositories, USFM parser) lives in `shared/src/commonMain`, with `expect`/`actual` helpers in `utils/Platform*.kt`.
 - `docs/RELEASING.md` covers releases and signing; `.github/scripts/` holds the smoke-test helpers; `shared/src/commonMain/.../testing` has fluent builders (`CoreVerse`, `CoreSettings`) for JVM tests.
 
 ## Testing conventions

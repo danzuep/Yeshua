@@ -17,7 +17,7 @@
 
 package com.github.danzuep.yeshua.android.core
 
-import androidx.annotation.VisibleForTesting
+import com.github.danzuep.yeshua.android.utils.VisibleForTesting
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -30,7 +30,7 @@ class BibleReadingManager(
         private val bibleReadingRepository: BibleReadingRepository, translationRepository: TranslationRepository, appScope: CoroutineScope
 ) {
     companion object {
-        private val TAG = BibleReadingManager::class.java.simpleName
+        private val TAG = "BibleReadingManager"
     }
 
     init {

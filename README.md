@@ -59,6 +59,10 @@ Tap a verse to select it and bring up its actions (highlight, share, bookmark, c
 
 Hundreds of other translations can be downloaded in the app from [eBible.org](https://ebible.org/download.php), or from download sites you add yourself. See the [full list](docs/TRANSLATIONS.md). The app interface is available in several languages, see [localization](docs/LOCALIZATION.md). Recent changes are in the [changelog](docs/CHANGELOG.md). Report bugs or request features on the [issue tracker](https://github.com/danzuep/Yeshua/issues).
 
+## Web
+
+A browser reader is published to GitHub Pages, see [docs/WEB.md](docs/WEB.md).
+
 ## About this project
 
 Thank you to [Xizhi Zhu](https://github.com/xizzhu) for creating [the original Joshua](https://github.com/xizzhu/Joshua), which this is built on. After the original appeared to be abandoned, this fork updated it to build with JDK 25 and brought the unit tests back to green. See [docs/RELEASING.md](docs/RELEASING.md) for how releases are built.

@@ -17,3 +17,4 @@
 
 include(":app")
 include(":shared")
+include(":web")

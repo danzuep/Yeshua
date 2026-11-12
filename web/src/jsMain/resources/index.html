@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Yeshua</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+    <h1>Yeshua</h1>
+    <select id="translation" aria-label="Translation"></select>
+    <select id="book" aria-label="Book"></select>
+    <select id="chapter" aria-label="Chapter"></select>
+</header>
+<main>
+    <div id="status" role="status">Loading…</div>
+    <article id="text"></article>
+    <nav>
+        <button id="previous" type="button">&larr; Previous</button>
+        <button id="next" type="button">Next &rarr;</button>
+    </nav>
+</main>
+<script src="yeshua.js"></script>
+</body>
+</html>

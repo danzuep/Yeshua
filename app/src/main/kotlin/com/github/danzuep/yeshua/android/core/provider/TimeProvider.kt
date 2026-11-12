@@ -20,9 +20,8 @@ package com.github.danzuep.yeshua.android.core.provider
 import android.os.SystemClock
 import java.util.Calendar
 
-interface TimeProvider {
+interface TimeProvider : TimeSource {
     val calendar: Calendar
-    val currentTimeMillis: Long
     val elapsedRealtime: Long
 }
 

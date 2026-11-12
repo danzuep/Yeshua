@@ -14,14 +14,8 @@
  * limitations under the License.
  */
 
-package com.github.danzuep.yeshua.android.core.repository.remote.android
+package com.github.danzuep.yeshua.android.core.repository.remote
 
-import com.github.danzuep.yeshua.android.core.repository.remote.RemoteTranslationInfo
-import com.github.danzuep.yeshua.android.core.repository.remote.parseTranslationTable
-import com.github.danzuep.yeshua.android.core.repository.remote.parseTranslationCsv
-import com.github.danzuep.yeshua.android.core.repository.remote.siteOrigin
-import com.github.danzuep.yeshua.android.core.repository.remote.toRemoteTranslationInfo
-import com.github.danzuep.yeshua.android.core.repository.remote.usfmZipUrl
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -75,17 +69,7 @@ class TranslationTableTest {
     }
 
     @Test
-    fun `test toRemoteTranslationInfo()`() {
-        val rows = parseTranslationCsv(
-            "translationId,languageName,languageNameInEnglish,title,shortTitle,Redistributable\n" +
-                "eng-web,English,English,World English Bible,World English Bible & more,True\n",
-            "https://ebible.org/download.php"
-        )
-        assertEquals(RemoteTranslationInfo("eng_web", "World English Bible & more", "eng", 0L), rows[0].toRemoteTranslationInfo())
-    }
-
-    @Test
-    fun `test toRemoteTranslationInfo() keeps the native name for languages unknown to the JVM`() {
+    fun `test toRemoteTranslationInfo() keeps the native name for languages unknown to the platform`() {
         val rows = parseTranslationCsv(
             "translationId,languageName,languageNameInEnglish,dialect,title,shortTitle,Redistributable\n" +
                 "zzzsbl,\u0395\u03bb\u03bb\u03b7\u03bd\u03b9\u03ba\u03ac,Greek,Ancient,x,SBL Greek NT,True\n",

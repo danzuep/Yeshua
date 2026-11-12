@@ -37,6 +37,11 @@ kotlin {
         }
     }
 
+    // Runs commonTest in Node and is the library the `web` module builds on.
+    js {
+        nodejs()
+    }
+
     sourceSets {
         commonMain.dependencies {
             implementation(Dependencies.Kotlin.coroutinesCore)

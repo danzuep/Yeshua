@@ -16,8 +16,7 @@
 
 package com.github.danzuep.yeshua.android.core.repository.remote
 
-import java.net.URI
-import java.util.Locale
+import com.github.danzuep.yeshua.android.utils.isKnownLanguageCode
 
 const val DEFAULT_DOWNLOAD_SITE = "https://ebible.org/download.php"
 
@@ -39,7 +38,7 @@ private val HEADER_CELL = Regex("<th\\b", RegexOption.IGNORE_CASE)
 private val ROW = Regex("<tr\\b", RegexOption.IGNORE_CASE)
 private val CELL = Regex("<t[dh]\\b[^>]*>", RegexOption.IGNORE_CASE)
 private val CELL_END = Regex("</t[dh]>|</tr>", RegexOption.IGNORE_CASE)
-private val ANCHOR = Regex("<a\\b([^>]*)>(.*?)</a>", setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))
+private val ANCHOR = Regex("<a\\b([^>]*)>([\\s\\S]*?)</a>", RegexOption.IGNORE_CASE)
 private val HREF = Regex("href\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)')", RegexOption.IGNORE_CASE)
 private val TAG = Regex("<[^>]*>")
 private val ENTITY = Regex("&(#x?[0-9a-fA-F]+|[a-zA-Z]+);")
@@ -167,8 +166,8 @@ private fun splitCells(row: String): List<Cell> = row.split(CELL).drop(1).map { 
 private fun decode(text: String): String = ENTITY.replace(text) { match ->
     val entity = match.groupValues[1]
     when {
-        entity.startsWith("#x", ignoreCase = true) -> entity.substring(2).toIntOrNull(16)?.let { String(Character.toChars(it)) }
-        entity.startsWith("#") -> entity.substring(1).toIntOrNull()?.let { String(Character.toChars(it)) }
+        entity.startsWith("#x", ignoreCase = true) -> entity.substring(2).toIntOrNull(16)?.let { codePointToString(it) }
+        entity.startsWith("#") -> entity.substring(1).toIntOrNull()?.let { codePointToString(it) }
         else -> when (entity.lowercase()) {
             "amp" -> "&"
             "lt" -> "<"
@@ -186,31 +185,68 @@ private fun idOf(href: String): String? {
     return query.split('&').firstOrNull { it.startsWith("id=") }?.substringAfter('=')?.trim()?.ifEmpty { null }
 }
 
-private fun resolve(pageUrl: String, href: String): String = try {
-    URI(pageUrl).resolve(href).toString()
-} catch (e: Exception) {
-    href
+private val SCHEME = Regex("""^[a-zA-Z][a-zA-Z0-9+.-]*:""")
+private val ORIGIN = Regex("""^([a-zA-Z][a-zA-Z0-9+.-]*)://([^/?#\s]*)""")
+
+private fun codePointToString(codePoint: Int): String? = when {
+    codePoint in 0..0xFFFF -> codePoint.toChar().toString()
+    codePoint in 0x10000..0x10FFFF -> {
+        val offset = codePoint - 0x10000
+        charArrayOf((0xD800 + (offset shr 10)).toChar(), (0xDC00 + (offset and 0x3FF)).toChar()).concatToString()
+    }
+    else -> null
+}
+
+/** Resolves [href] against [pageUrl] like a browser would, or returns [href] as it is if [pageUrl] has no origin. */
+private fun resolve(pageUrl: String, href: String): String {
+    if (SCHEME.containsMatchIn(href)) return href
+    val origin = ORIGIN.find(pageUrl.trim()) ?: return href
+    val base = origin.value
+    val pathAndQuery = pageUrl.trim().removePrefix(base).substringBefore('#')
+    val basePath = pathAndQuery.substringBefore('?')
+    return when {
+        href.startsWith("//") -> "${origin.groupValues[1]}:$href"
+        href.startsWith("/") -> base + normalizePath(href)
+        href.startsWith("?") -> base + basePath + href
+        href.startsWith("#") -> base + pathAndQuery + href
+        else -> base + normalizePath(basePath.substringBeforeLast('/', "") + "/" + href)
+    }
+}
+
+private fun normalizePath(pathAndQuery: String): String {
+    val path = pathAndQuery.substringBefore('?').substringBefore('#')
+    val suffix = pathAndQuery.removePrefix(path)
+    val segments = mutableListOf<String>()
+    val parts = path.split('/')
+    parts.forEachIndexed { index, part ->
+        when {
+            part == "." -> if (index == parts.lastIndex) segments.add("")
+            part == ".." -> {
+                if (segments.size > 1) segments.removeAt(segments.lastIndex)
+                if (index == parts.lastIndex) segments.add("")
+            }
+            else -> segments.add(part)
+        }
+    }
+    return segments.joinToString("/") + suffix
 }
 
 /** The scheme and host (and port) of [siteUrl], e.g. `https://ebible.org`, or `null` if it is not a valid web address. */
-fun siteOrigin(siteUrl: String): String? = try {
-    val uri = URI(siteUrl.trim())
-    if (uri.scheme?.lowercase() in listOf("http", "https") && !uri.host.isNullOrEmpty()) {
-        "${uri.scheme.lowercase()}://${uri.authority}"
-    } else {
-        null
-    }
-} catch (e: Exception) {
-    null
+fun siteOrigin(siteUrl: String): String? {
+    val match = ORIGIN.find(siteUrl.trim()) ?: return null
+    val scheme = match.groupValues[1].lowercase()
+    val authority = match.groupValues[2]
+    val host = authority.substringAfterLast('@').substringBefore(':')
+    return if (scheme in listOf("http", "https") && host.isNotEmpty()) "$scheme://$authority" else null
 }
 
 /** The app uses the translation id as the name of a database table, so it can only contain letters, digits and underscores. */
 fun TranslationTableRow.toShortName(): String = id.replace(Regex("[^A-Za-z0-9]"), "_")
 
-/** eBible.org ids start with the ISO 639-3 language code; falls back to `English (native)` if it is unknown to the JVM. */
+/** eBible.org ids start with the ISO 639-3 language code; falls back to `English (native)` if it is unknown to the platform. */
 fun TranslationTableRow.toLanguage(): String {
     val code = id.take(3).lowercase()
-    val known = code.length == 3 && code.all { it in 'a'..'z' } && Locale.forLanguageTag(code).displayLanguage.let { it.isNotEmpty() && !it.equals(code, ignoreCase = true) }
+    val known = code.length == 3 && code.all { it in 'a'..'z' } && isKnownLanguageCode(code)
     if (known) return code
     val english = languageEnglish.ifEmpty { language }.ifEmpty { code }
     return if (language.isEmpty() || language == english) english else "$english ($language)"

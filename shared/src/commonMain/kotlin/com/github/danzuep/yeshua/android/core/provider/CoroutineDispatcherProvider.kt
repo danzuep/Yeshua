@@ -19,6 +19,7 @@ package com.github.danzuep.yeshua.android.core.provider
 
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import com.github.danzuep.yeshua.android.utils.ioDispatcher
 
 interface CoroutineDispatcherProvider {
     val main: CoroutineDispatcher
@@ -35,7 +36,7 @@ class DefaultCoroutineDispatcherProvider : CoroutineDispatcherProvider {
         get() = Dispatchers.Default
 
     override val io: CoroutineDispatcher
-        get() = Dispatchers.IO
+        get() = ioDispatcher()
 
     override val unconfined: CoroutineDispatcher
         get() = Dispatchers.Unconfined

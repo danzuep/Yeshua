@@ -1,0 +1,78 @@
+name: Web site
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'web/**'
+      - 'shared/**'
+      - 'buildSrc/**'
+      - 'gradle/**'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
+      - 'app/src/main/assets/translations.csv'
+      - '.github/scripts/web-smoke.mjs'
+      - '.github/workflows/pages.yml'
+  pull_request:
+    paths:
+      - 'web/**'
+      - 'shared/**'
+      - 'buildSrc/**'
+      - 'gradle/**'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
+      - 'app/src/main/assets/translations.csv'
+      - '.github/scripts/web-smoke.mjs'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+    inputs:
+      translations:
+        description: 'Comma separated eBible ids to publish'
+        default: 'engwebu,eng-kjv2006,eng-asv'
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+    - uses: actions/checkout@v7
+    - uses: actions/setup-java@v6
+      with:
+        distribution: 'temurin'
+        java-version: '25'
+    - uses: gradle/actions/setup-gradle@v6
+    - name: Build the site
+      run: ./gradlew :web:assembleSite -Ptranslations="${{ inputs.translations || 'engwebu,eng-kjv2006,eng-asv' }}"
+    - name: Smoke test in headless Chromium
+      run: |
+        npm install --no-save playwright
+        npx playwright install --with-deps chromium
+        python3 -m http.server 8080 --directory web/build/site &
+        sleep 2
+        node .github/scripts/web-smoke.mjs http://localhost:8080/ web-smoke.png
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: web-smoke
+        path: web-smoke.png
+        if-no-files-found: ignore
+    - uses: actions/upload-pages-artifact@v3
+      with:
+        path: web/build/site
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+    - id: deployment
+      uses: actions/deploy-pages@v4
