@@ -18,6 +18,7 @@ package com.github.danzuep.yeshua.android.web
 
 import com.github.danzuep.yeshua.android.core.PARAGRAPH
 import com.github.danzuep.yeshua.android.core.extractHeadings
+import com.github.danzuep.yeshua.android.core.hasRuby
 import com.github.danzuep.yeshua.android.core.repository.remote.RemoteTranslation
 import com.github.danzuep.yeshua.android.core.repository.remote.RemoteTranslationInfo
 import com.github.danzuep.yeshua.android.core.toDisplayedText
@@ -52,6 +53,7 @@ private class Reader(private val translations: List<RemoteTranslationInfo>) {
     private val bookSelect = element<HTMLSelectElement>("book")
     private val chapterSelect = element<HTMLSelectElement>("chapter")
     private val rubyToggle = element<HTMLInputElement>("ruby")
+    private val rubyLabel = element<HTMLElement>("ruby-label")
     private val previous = element<HTMLButtonElement>("previous")
     private val next = element<HTMLButtonElement>("next")
     private val text = element<HTMLDivElement>("text")
@@ -102,6 +104,7 @@ private class Reader(private val translations: List<RemoteTranslationInfo>) {
         }
         status.textContent = ""
         localStorage.setItem(KEY_TRANSLATION, shortName)
+        rubyLabel.hidden = translation.verses.values.none { chapter -> chapter.any { it.hasRuby() } }
 
         bookSelect.innerHTML = ""
         bookSelect.append(*chapters.keys.sorted().map { option(it.toString(), translation.bookNames[it]) }.toTypedArray())
