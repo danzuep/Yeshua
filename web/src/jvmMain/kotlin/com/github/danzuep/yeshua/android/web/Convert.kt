@@ -30,7 +30,8 @@ import java.util.zip.ZipInputStream
 private const val ORIGIN = "https://ebible.org"
 
 /**
- * Usage: `<translations.csv> <output directory> <comma separated eBible ids>`. Downloads the USFM zip of each
+ * Usage: `<translations.csv> <output directory> <comma separated eBible ids>`. An id can be followed by `=<zip url>` to read that zip
+ * instead of the one on eBible.org, e.g. a zip with ruby text. Downloads the USFM zip of each
  * translation, parses it with the same code as the app and writes `<shortName>.json` and `index.json`.
  */
 fun main(args: Array<String>) {
@@ -38,10 +39,11 @@ fun main(args: Array<String>) {
     val catalog = parseTranslationCsv(File(args[0]).readText(), "$ORIGIN/").associateBy { it.id }
     val output = File(args[1]).apply { mkdirs() }
 
-    val infos = args[2].split(',').map { it.trim() }.filter { it.isNotEmpty() }.map { id ->
+    val infos = args[2].split(',').map { it.trim() }.filter { it.isNotEmpty() }.map { entry ->
+        val id = entry.substringBefore('=')
         val row = requireNotNull(catalog[id]) { "$id is not a redistributable translation in ${args[0]}" }
         val info = row.toRemoteTranslationInfo()
-        val books = URI(usfmZipUrl(ORIGIN, row.toShortName())).toURL().openStream().use { stream ->
+        val books = URI(entry.substringAfter('=', usfmZipUrl(ORIGIN, row.toShortName()))).toURL().openStream().use { stream ->
             ZipInputStream(stream).use { zip ->
                 generateSequence { zip.nextEntry }
                     .filter { !it.isDirectory }

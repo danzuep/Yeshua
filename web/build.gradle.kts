@@ -19,7 +19,7 @@ plugins {
     id(Dependencies.Kotlin.Multiplatform.plugin)
 }
 
-val translationIds = providers.gradleProperty("translations").orElse("engwebu,eng-kjv2006,eng-asv")
+val translationIds = providers.gradleProperty("translations").orElse("engwebu,cmn-ncvt")
 val translationsDir = layout.buildDirectory.dir("translations")
 
 kotlin {

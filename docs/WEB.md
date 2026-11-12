@@ -9,7 +9,7 @@ The `web` module builds a static reader (reading and switching translations) tha
 ## Building locally
 
 ```
-./gradlew :web:assembleSite -Ptranslations=engwebu,eng-kjv2006,eng-asv
+./gradlew :web:assembleSite -Ptranslations=engwebu,cmn-ncvt
 python3 -m http.server --directory web/build/site
 ```
 
@@ -18,3 +18,5 @@ python3 -m http.server --directory web/build/site
 ## Publishing
 
 Pushes to `main` deploy the site. Enable it once under Settings > Pages > Source: GitHub Actions. Pull requests build the site and run `.github/scripts/web-smoke.mjs` (headless Chromium: John 1 renders, translation switching and the remembered position work) without deploying.
+
+A translation can read its zip from another URL with `id=<zip url>`, e.g. `-Ptranslations=engwebu,cmn-ncvt=https://github.com/<owner>/<repo>/releases/download/usfm-ruby/cmn-ncvt_zh-HK.zip` for ruby USFM built by a separate workflow. The manual workflow run has `ruby_zip` and `ruby_id` inputs for this.

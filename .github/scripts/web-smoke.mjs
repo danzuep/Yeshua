@@ -25,17 +25,17 @@ try {
   await page.selectOption('#translation', translations[1]);
   await page.waitForFunction((t) => document.querySelector('#translation').value === t && document.querySelector('#status').textContent === '', translations[1]);
   await page.waitForSelector('#text .verse');
-  assert.equal(await page.locator('#book option:checked').textContent(), 'John');
+  assert.equal(await page.inputValue('#book'), '42', 'still on John after switching translation');
 
   await page.selectOption('#chapter', { value: '2' });
-  await page.waitForFunction(() => document.title.includes('John 3'));
+  await page.waitForFunction(() => document.title.endsWith('3 · Yeshua'));
   await page.click('#next');
-  await page.waitForFunction(() => document.title.includes('John 4'));
+  await page.waitForFunction(() => document.title.endsWith('4 · Yeshua'));
 
   await page.reload();
   await page.waitForSelector('#text .verse');
   assert.equal(await page.inputValue('#translation'), translations[1], 'translation is remembered');
-  assert.ok((await page.title()).includes('John 4'), 'position is remembered');
+  assert.ok((await page.title()).endsWith('4 · Yeshua'), 'position is remembered');
 
   assert.deepEqual(errors, [], 'no console errors');
   console.log('web smoke test passed');

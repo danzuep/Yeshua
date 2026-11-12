@@ -27,7 +27,13 @@ on:
     inputs:
       translations:
         description: 'Comma separated eBible ids to publish'
-        default: 'engwebu,eng-kjv2006,eng-asv'
+        default: 'engwebu,cmn-ncvt'
+      ruby_zip:
+        description: 'Optional USFM zip URL with ruby text (e.g. a usfm-ruby release asset) used instead of the eBible zip of ruby_id'
+        default: ''
+      ruby_id:
+        description: 'eBible id that ruby_zip replaces'
+        default: 'cmn-ncvt'
 
 concurrency:
   group: pages-${{ github.ref }}
@@ -45,7 +51,13 @@ jobs:
         java-version: '25'
     - uses: gradle/actions/setup-gradle@v6
     - name: Build the site
-      run: ./gradlew :web:assembleSite -Ptranslations="${{ inputs.translations || 'engwebu,eng-kjv2006,eng-asv' }}"
+      env:
+        TRANSLATIONS: ${{ inputs.translations || 'engwebu,cmn-ncvt' }}
+        RUBY_ZIP: ${{ inputs.ruby_zip }}
+        RUBY_ID: ${{ inputs.ruby_id || 'cmn-ncvt' }}
+      run: |
+        if [ -n "$RUBY_ZIP" ]; then TRANSLATIONS="${TRANSLATIONS/$RUBY_ID/$RUBY_ID=$RUBY_ZIP}"; fi
+        ./gradlew :web:assembleSite -Ptranslations="$TRANSLATIONS"
     - name: Smoke test in headless Chromium
       run: |
         npm install --no-save playwright
