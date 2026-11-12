@@ -189,7 +189,7 @@ private class Reader(private val translations: List<RemoteTranslationInfo>) {
 
     /** The first chapter ending below the sticky header is the current one. */
     private fun updateCurrent() {
-        val line = element<HTMLElement>("toolbar").getBoundingClientRect().bottom + 8
+        val line = element<HTMLElement>("toolbar").getBoundingClientRect().bottom + 24
         val visible = sections().firstOrNull { it.getBoundingClientRect().bottom > line } ?: sections().firstOrNull() ?: return
         val (b, c) = key(visible)
         if (b != book || c != chapter) setCurrent(b, c)
