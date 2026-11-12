@@ -1,5 +1,4 @@
 /*
- * Copyright (C) 2023 Xizhi Zhu
  * Copyright (C) 2026 Daniel Collingwood
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
