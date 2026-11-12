@@ -33,6 +33,13 @@ class RubyTest {
     }
 
     @Test
+    fun extractHeadings_keepsRubyOnlyWhenAsked() {
+        val verse = "$HEADING${ruby("神", "san4")}的愛$HEADING在起初"
+        assertEquals(listOf("神的愛"), verse.extractHeadings())
+        assertEquals(listOf(ruby("神", "san4") + "的愛"), verse.extractHeadings(rubyOn = true))
+    }
+
+    @Test
     fun toRubyParts_withoutRuby_isOnePart() {
         val parts = "In the beginning".toRubyParts()
         assertEquals(1, parts.size)

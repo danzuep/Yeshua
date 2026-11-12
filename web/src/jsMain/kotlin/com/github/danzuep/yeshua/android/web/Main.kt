@@ -205,8 +205,8 @@ private class Reader(private val translations: List<RemoteTranslationInfo>) {
         var paragraph = newParagraph(section)
         translation.verses.getValue(Pair(chapterBook, chapterIndex)).forEachIndexed { index, verse ->
             if (verse.isEmpty()) return@forEachIndexed
-            verse.extractHeadings().forEach { heading ->
-                section.appendChild(document.createElement("h3").apply { textContent = heading })
+            verse.extractHeadings(rubyToggle.checked).forEach { heading ->
+                section.appendChild(document.createElement("h3").apply { appendRubyText(heading) })
                 paragraph = newParagraph(section)
             }
             if (verse.trimStart().startsWith(PARAGRAPH) && paragraph.hasChildNodes()) paragraph = newParagraph(section)
@@ -219,16 +219,7 @@ private class Reader(private val translations: List<RemoteTranslationInfo>) {
                 })
                 paragraph.appendChild(document.createElement("span").apply {
                     className = "verse"
-                    content.toRubyParts().forEach { part ->
-                        if (part.reading.isNullOrEmpty()) {
-                            appendChild(document.createTextNode(part.text))
-                        } else {
-                            appendChild(document.createElement("ruby").apply {
-                                appendChild(document.createTextNode(part.text))
-                                appendChild(document.createElement("rt").apply { textContent = part.reading })
-                            })
-                        }
-                    }
+                    appendRubyText(content)
                     appendChild(document.createTextNode(" "))
                 })
             }
@@ -248,6 +239,19 @@ private class Reader(private val translations: List<RemoteTranslationInfo>) {
         fontSize = percent.coerceIn(70, 200)
         document.documentElement.unsafeCast<HTMLElement>().style.setProperty("font-size", "$fontSize%")
         localStorage.setItem(KEY_FONT, fontSize.toString())
+    }
+
+    private fun HTMLElement.appendRubyText(content: String) {
+        content.toRubyParts().forEach { part ->
+            if (part.reading.isNullOrEmpty()) {
+                appendChild(document.createTextNode(part.text))
+            } else {
+                appendChild(document.createElement("ruby").apply {
+                    appendChild(document.createTextNode(part.text))
+                    appendChild(document.createElement("rt").apply { textContent = part.reading })
+                })
+            }
+        }
     }
 
     private fun newParagraph(parent: HTMLElement): HTMLElement =

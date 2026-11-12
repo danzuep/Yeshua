@@ -41,9 +41,10 @@ class VerseNote(val isCrossReference: Boolean, val text: String)
 fun String.extractNotes(): List<VerseNote> =
         NOTE_CONTENT_REGEX.findAll(this).map { VerseNote(it.groupValues[1] == "x", it.groupValues[2]) }.toList()
 
-/** The section headings of a verse, in the order they appear. */
-fun String.extractHeadings(): List<String> =
-        HEADING_CONTENT_REGEX.findAll(this).map { it.groupValues[1].removeRuby() }.filter { it.isNotBlank() }.toList()
+/** The section headings of a verse, in the order they appear; with [rubyOn] their ruby marks are kept for [toRubyParts]. */
+fun String.extractHeadings(rubyOn: Boolean = false): List<String> =
+        HEADING_CONTENT_REGEX.findAll(this).map { it.groupValues[1].let { heading -> if (rubyOn) heading else heading.removeRuby() } }
+                .filter { it.removeRuby().isNotBlank() }.toList()
 
 /** A part of verse text; [reading] (e.g. furigana or pinyin) is only set where the text is ruby that goes above [text]. */
 class RubyPart(val text: String, val reading: String? = null)
