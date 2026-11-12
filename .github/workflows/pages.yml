@@ -34,6 +34,9 @@ on:
       ruby_id:
         description: 'eBible id that ruby_zip replaces'
         default: 'cmn-ncvt'
+      ruby_language:
+        description: 'Language the annotator reads the ruby_id text as (zh-CN pinyin, zh-HK Jyutping, ja-JP, ko, vi, za)'
+        default: 'zh-HK'
 
 concurrency:
   group: pages-${{ github.ref }}
@@ -43,6 +46,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      RUBY_ID: ${{ inputs.ruby_id || 'cmn-ncvt' }}
+      RUBY_LANGUAGE: ${{ inputs.ruby_language || 'zh-HK' }}
     steps:
     - uses: actions/checkout@v7
     - uses: actions/setup-java@v6
@@ -50,11 +56,27 @@ jobs:
         distribution: 'temurin'
         java-version: '25'
     - uses: gradle/actions/setup-gradle@v6
+    # Adds Jyutping (or the ruby_language reading) to the ruby_id text, unless ruby_zip already supplies ruby USFM.
+    - name: Download the USFM and Unihan readings
+      if: inputs.ruby_zip == ''
+      run: |
+        mkdir ruby
+        curl -fL "https://ebible.org/Scriptures/${RUBY_ID}_usfm.zip" -o "ruby/${RUBY_ID}_usfm.zip"
+        curl -fL https://raw.githubusercontent.com/danzuep/PhoneticAnnotator/v0.2.0/data/Unihan_Readings.txt -o ruby/Unihan_Readings.txt
+    - uses: actions/setup-dotnet@v6.1.0
+      if: inputs.ruby_zip == ''
+      with:
+        dotnet-version: '10.0.x'
+    - uses: danzuep/PhoneticAnnotator@v0.2.0
+      if: inputs.ruby_zip == ''
+      with:
+        setup-dotnet: 'false'
+        version: 0.2.0
+        args: --data ruby/Unihan_Readings.txt --language ${{ env.RUBY_LANGUAGE }} --usfm-in ruby/${{ env.RUBY_ID }}_usfm.zip --usfm-out ruby/${{ env.RUBY_ID }}_ruby.zip
     - name: Build the site
       env:
         TRANSLATIONS: ${{ inputs.translations || 'engwebu,cmn-ncvt' }}
-        RUBY_ZIP: ${{ inputs.ruby_zip }}
-        RUBY_ID: ${{ inputs.ruby_id || 'cmn-ncvt' }}
+        RUBY_ZIP: ${{ inputs.ruby_zip || format('file://{0}/ruby/{1}_ruby.zip', github.workspace, env.RUBY_ID) }}
       run: |
         if [ -n "$RUBY_ZIP" ]; then TRANSLATIONS="${TRANSLATIONS/$RUBY_ID/$RUBY_ID=$RUBY_ZIP}"; fi
         ./gradlew :web:assembleSite -Ptranslations="$TRANSLATIONS"
