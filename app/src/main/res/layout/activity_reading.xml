@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Modified by Daniel Collingwood, 2026 -->
-<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- DrawerLayout ignores its own padding, so the system bar insets BaseActivity applies go on this wrapper. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+<androidx.drawerlayout.widget.DrawerLayout
     android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -55,3 +60,4 @@
         android:name="com.github.danzuep.yeshua.android.reading.chapter.ChapterSelectionFragment"
         android:layout_gravity="start" />
 </androidx.drawerlayout.widget.DrawerLayout>
+</FrameLayout>
