@@ -83,8 +83,11 @@ fun Verse.stripStructure(): Verse = copy(
 )
 
 /** The text as the reading screen shows it: headings and notes removed, paragraph and poetry line breaks kept as '\n'. */
-fun String.toDisplayedText(): String =
-        removeNotes().removeRuby().replace(HEADING_REGEX, "").replace(PARAGRAPH, '\n').trim { it == '\n' || it == ' ' }
+fun String.toDisplayedText(): String = toDisplayedText(rubyOn = false)
+
+/** The text to display; with [rubyOn] the ruby marks are kept for [toRubyParts], otherwise only the base text stays. */
+fun String.toDisplayedText(rubyOn: Boolean): String =
+        removeNotes().let { if (rubyOn) it else it.removeRuby() }.replace(HEADING_REGEX, "").replace(PARAGRAPH, '\n').trim { it == '\n' || it == ' ' }
 
 fun Verse.toDisplayedVerse(): Verse = copy(
         text = text.copy(text = text.text.toDisplayedText()),

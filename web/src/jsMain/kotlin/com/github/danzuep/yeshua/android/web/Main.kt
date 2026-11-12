@@ -22,6 +22,7 @@ import com.github.danzuep.yeshua.android.core.extractHeadings
 import com.github.danzuep.yeshua.android.core.repository.remote.RemoteTranslation
 import com.github.danzuep.yeshua.android.core.repository.remote.RemoteTranslationInfo
 import com.github.danzuep.yeshua.android.core.toDisplayedText
+import com.github.danzuep.yeshua.android.core.toRubyParts
 import kotlinx.browser.document
 import kotlinx.browser.localStorage
 import kotlinx.browser.window
@@ -30,12 +31,14 @@ import kotlinx.coroutines.await
 import kotlinx.coroutines.launch
 import org.w3c.dom.HTMLButtonElement
 import org.w3c.dom.HTMLDivElement
+import org.w3c.dom.HTMLInputElement
 import org.w3c.dom.HTMLElement
 import org.w3c.dom.HTMLSelectElement
 
 private const val KEY_TRANSLATION = "translation"
 private const val KEY_BOOK = "book"
 private const val KEY_CHAPTER = "chapter"
+private const val KEY_RUBY = "ruby"
 
 private fun <T> element(id: String): T = document.getElementById(id).unsafeCast<T>()
 
@@ -49,6 +52,7 @@ private class Reader(private val translations: List<RemoteTranslationInfo>) {
     private val translationSelect = element<HTMLSelectElement>("translation")
     private val bookSelect = element<HTMLSelectElement>("book")
     private val chapterSelect = element<HTMLSelectElement>("chapter")
+    private val rubyToggle = element<HTMLInputElement>("ruby")
     private val previous = element<HTMLButtonElement>("previous")
     private val next = element<HTMLButtonElement>("next")
     private val text = element<HTMLDivElement>("text")
@@ -69,11 +73,16 @@ private class Reader(private val translations: List<RemoteTranslationInfo>) {
         translationSelect.value = info.shortName
         book = localStorage.getItem(KEY_BOOK)?.toIntOrNull() ?: JOHN
         chapter = localStorage.getItem(KEY_CHAPTER)?.toIntOrNull() ?: 0
+        rubyToggle.checked = localStorage.getItem(KEY_RUBY) != "false"
         showTranslation(info.shortName)
 
         translationSelect.onchange = { launch { showTranslation(translationSelect.value) } }
         bookSelect.onchange = { select(bookSelect.value.toInt(), 0) }
         chapterSelect.onchange = { select(book, chapterSelect.value.toInt()) }
+        rubyToggle.onchange = {
+            localStorage.setItem(KEY_RUBY, rubyToggle.checked.toString())
+            render()
+        }
         previous.onclick = { step(-1) }
         next.onclick = { step(1) }
     }
@@ -138,7 +147,7 @@ private class Reader(private val translations: List<RemoteTranslationInfo>) {
                 paragraph = newParagraph()
             }
             if (verse.trimStart().startsWith(PARAGRAPH) && paragraph.hasChildNodes()) paragraph = newParagraph()
-            val lines = verse.toDisplayedText().split('\n')
+            val lines = verse.toDisplayedText(rubyToggle.checked).split('\n')
             lines.forEachIndexed { line, content ->
                 if (line > 0) paragraph = newParagraph()
                 if (line == 0) paragraph.appendChild(document.createElement("sup").apply {
@@ -147,7 +156,17 @@ private class Reader(private val translations: List<RemoteTranslationInfo>) {
                 })
                 paragraph.appendChild(document.createElement("span").apply {
                     className = "verse"
-                    textContent = "$content "
+                    content.toRubyParts().forEach { part ->
+                        if (part.reading.isNullOrEmpty()) {
+                            appendChild(document.createTextNode(part.text))
+                        } else {
+                            appendChild(document.createElement("ruby").apply {
+                                appendChild(document.createTextNode(part.text))
+                                appendChild(document.createElement("rt").apply { textContent = part.reading })
+                            })
+                        }
+                    }
+                    appendChild(document.createTextNode(" "))
                 })
             }
         }
