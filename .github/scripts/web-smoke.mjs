@@ -16,9 +16,10 @@ try {
 
   assert.equal(await page.locator('#book option:checked').textContent(), 'John');
   assert.equal(await page.inputValue('#chapter'), '0');
-  const first = await page.locator('#text .verse').first().textContent();
+  const john = page.locator('#text section[data-book="42"][data-chapter="0"]');
+  const first = await john.locator('.verse').first().textContent();
   assert.match(first, /beginning/i, `unexpected first verse: ${first}`);
-  assert.ok((await page.locator('#text .verse').count()) >= 40, 'John 1 has 51 verses');
+  assert.ok((await john.locator('.verse').count()) >= 40, 'John 1 has 51 verses');
 
   assert.ok(await page.locator('#ruby-label').isHidden(), 'no ruby checkbox without ruby text');
 
@@ -37,15 +38,21 @@ try {
     await page.check('#ruby');
   }
 
-  await page.selectOption('#chapter', { value: '2' });
+  await page.selectOption('#chapter', { value: '1' });
+  await page.waitForFunction(() => document.title.endsWith('2 · Yeshua'));
+  await page.evaluate(() => document.querySelector('#text section[data-book="42"][data-chapter="2"]').scrollIntoView());
   await page.waitForFunction(() => document.title.endsWith('3 · Yeshua'));
-  await page.click('#next');
-  await page.waitForFunction(() => document.title.endsWith('4 · Yeshua'));
+  await page.waitForFunction(() => document.title.endsWith('3 · Yeshua'));
+
+  assert.ok((await page.locator('#text section').count()) >= 3, 'neighbouring chapters are loaded for infinite scroll');
+
+  await page.click('#theme');
+  assert.equal(await page.getAttribute('html', 'data-theme'), 'dark', 'night mode toggles');
 
   await page.reload();
   await page.waitForSelector('#text .verse');
   assert.equal(await page.inputValue('#translation'), translations[1], 'translation is remembered');
-  assert.ok((await page.title()).endsWith('4 · Yeshua'), 'position is remembered');
+  assert.ok((await page.title()).endsWith('3 · Yeshua'), 'position is remembered');
 
   assert.deepEqual(errors, [], 'no console errors');
   console.log('web smoke test passed');
