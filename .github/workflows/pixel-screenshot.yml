@@ -6,6 +6,7 @@ on:
       - '.github/workflows/pixel-screenshot.yml'
       - '.github/scripts/pixel-screenshot.sh'
       - '.github/scripts/make-minimal-web.sh'
+      - 'app/src/main/**'
 
 jobs:
   screenshot:
