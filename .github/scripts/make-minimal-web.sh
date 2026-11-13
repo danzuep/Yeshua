@@ -28,8 +28,11 @@ sed -i -E '/^\\v 1 /s/(.*\*,) (\\w and[|])/\1\n\\p\n\2/' "$work/minimal/$(basena
 grep -q '^\\w and[|]' "$work/minimal/$(basename "$john")" || { grep -n -m3 '^\\v 1 ' "$work/minimal/$(basename "$john")" >&2; exit 1; }
 
 # Add ruby to the start of verse 2, to check the reader draws the reading above its base text.
-sed -i -E '/^\\v 2 /s/^\\v 2 /\\v 2 \\rb Ruby|reading\\rb* /' "$work/minimal/$(basename "$john")"
-grep -q '^\\v 2 \\rb Ruby|reading\\rb\* ' "$work/minimal/$(basename "$john")"
+# Set NO_RUBY=1 to leave it out, e.g. for plain screenshots.
+if [ -z "${NO_RUBY:-}" ]; then
+  sed -i -E '/^\\v 2 /s/^\\v 2 /\\v 2 \\rb Ruby|reading\\rb* /' "$work/minimal/$(basename "$john")"
+  grep -q '^\\v 2 \\rb Ruby|reading\\rb\* ' "$work/minimal/$(basename "$john")"
+fi
 
 (cd "$work/minimal" && zip -q -r "$out" .)
 echo "Wrote $out ($(unzip -l "$out" | tail -n 1))"

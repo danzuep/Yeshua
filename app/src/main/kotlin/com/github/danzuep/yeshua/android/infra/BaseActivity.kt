@@ -25,6 +25,7 @@ import android.view.WindowManager
 import androidx.annotation.CallSuper
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.viewbinding.ViewBinding
@@ -67,6 +68,12 @@ abstract class BaseActivity<VB : ViewBinding, ViewAction, ViewState, VM : BaseVi
 
         setContentView(viewBinding.root)
         extendIntoDisplayCutout()
+        // The bars are transparent over the app background, so their icons must contrast with it: dark in light mode.
+        val isNight = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+        WindowCompat.getInsetsController(window, viewBinding.root).apply {
+            isAppearanceLightStatusBars = !isNight
+            isAppearanceLightNavigationBars = !isNight
+        }
         // Edge-to-edge is enforced on Android 15+, so keep content out of the status bar and cutout.
         ViewCompat.setOnApplyWindowInsetsListener(viewBinding.root) { view, insets ->
             val bars = insets.getInsets(
