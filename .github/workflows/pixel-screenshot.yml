@@ -1,4 +1,4 @@
-name: Pixel 10 screenshot
+name: Pixel screenshot
 on:
   workflow_dispatch:
   pull_request:
@@ -24,14 +24,12 @@ jobs:
         echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
         sudo udevadm control --reload-rules
         sudo udevadm trigger --name-match=kvm
-    - name: Update Android cmdline-tools for the Pixel 10 profile
-      run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "cmdline-tools;latest"
     - uses: reactivecircus/android-emulator-runner@v2
       with:
         api-level: 36
         target: google_apis
         arch: x86_64
-        profile: pixel_10
+        profile: pixel_9
         emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio
         script: bash .github/scripts/pixel-screenshot.sh
     - uses: actions/upload-artifact@v7

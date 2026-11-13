@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Launches the release APK on the Pixel 10 emulator profile and captures the reading screen in portrait and landscape,
+# Launches the release APK on the Pixel 9 emulator profile (same 6.3" 1080x2424 punch-hole display as the Pixel 10; the runner SDK has no pixel_10 profile) and captures the reading screen in portrait and landscape,
 # to check that the toolbar and chapter picker stay inside the system bars.
 set -u
 
