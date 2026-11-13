@@ -1,6 +1,10 @@
 name: Pixel 10 screenshot
 on:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/pixel-screenshot.yml'
+      - '.github/scripts/pixel-screenshot.sh'
 
 jobs:
   screenshot:
