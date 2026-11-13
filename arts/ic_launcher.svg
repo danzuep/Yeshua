@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="108" height="108" viewBox="0 0 108 108">
   <defs>
-    <radialGradient id="sun" cx="256" cy="180" r="130" gradientUnits="userSpaceOnUse">
+    <radialGradient id="sun" cx="256" cy="180" r="170" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#FFFFFF"/>
       <stop offset="0.25" stop-color="#FEF9C3"/>
       <stop offset="0.5" stop-color="#FCD34D" stop-opacity="0.9"/>
@@ -21,10 +21,12 @@
   </defs>
   <rect width="108" height="108" fill="#0038b8"/>
   <g transform="translate(54,54) scale(0.18) translate(-256,-247)">
-    <circle cx="256" cy="176" r="130" fill="url(#sun)"/>
+    <circle cx="256" cy="176" r="170" fill="url(#sun)"/>
     <circle cx="194" cy="316" r="108" fill="url(#tomb)"/>
     <circle cx="306" cy="322" r="110" fill="#020617" fill-opacity="0.3"/>
     <circle cx="318" cy="316" r="108" fill="url(#stone)"/>
-    <path d="M318,272h12v32h26v12h-26v44h-12v-44h-26v-12h26z" fill="#1E293B" fill-opacity="0.35"/>
+    <path d="M306,262h24v28h40v24h-40v56h-24v-56h-40v-24h40z" fill="#FFFFFF" fill-opacity="0.22" transform="translate(2,2.5)"/>
+    <path d="M306,262h24v28h40v24h-40v56h-24v-56h-40v-24h40z" fill="#1E293B" fill-opacity="0.16" transform="translate(-1.5,-1.5)"/>
+    <path d="M306,262h24v28h40v24h-40v56h-24v-56h-40v-24h40z" fill="#94A3B8" fill-opacity="0.35"/>
   </g>
 </svg>

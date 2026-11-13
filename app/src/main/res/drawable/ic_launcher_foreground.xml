@@ -12,13 +12,13 @@
         <group
             android:translateX="-256"
             android:translateY="-247">
-            <path android:pathData="M256,176m-130,0a130,130 0 1,1 260,0a130,130 0 1,1 -260,0">
+            <path android:pathData="M256,176m-170,0a170,170 0 1,1 340,0a170,170 0 1,1 -340,0">
                 <aapt:attr name="android:fillColor">
                     <gradient
                         android:type="radial"
                         android:centerX="256"
                         android:centerY="180"
-                        android:gradientRadius="130">
+                        android:gradientRadius="170">
                         <item android:offset="0" android:color="#FFFFFFFF" />
                         <item android:offset="0.25" android:color="#FFFEF9C3" />
                         <item android:offset="0.5" android:color="#E6FCD34D" />
@@ -57,9 +57,23 @@
                     </gradient>
                 </aapt:attr>
             </path>
+            <group
+                android:translateX="2"
+                android:translateY="2.5">
+                <path
+                    android:fillColor="#38FFFFFF"
+                    android:pathData="M306,262h24v28h40v24h-40v56h-24v-56h-40v-24h40z" />
+            </group>
+            <group
+                android:translateX="-1.5"
+                android:translateY="-1.5">
+                <path
+                    android:fillColor="#291E293B"
+                    android:pathData="M306,262h24v28h40v24h-40v56h-24v-56h-40v-24h40z" />
+            </group>
             <path
-                android:fillColor="#591E293B"
-                android:pathData="M318,272h12v32h26v12h-26v44h-12v-44h-26v-12h26z" />
+                android:fillColor="#5994A3B8"
+                android:pathData="M306,262h24v28h40v24h-40v56h-24v-56h-40v-24h40z" />
         </group>
     </group>
 </vector>
